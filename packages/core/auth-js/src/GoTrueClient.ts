@@ -24,12 +24,12 @@ import {
   isAuthSessionMissingError,
 } from './lib/errors'
 import {
-  Fetch,
   _request,
   _sessionResponse,
   _sessionResponsePassword,
   _ssoResponse,
   _userResponse,
+  Fetch,
 } from './lib/fetch'
 import {
   decodeJWT,
@@ -88,6 +88,8 @@ import type {
   JWK,
   JwtHeader,
   JwtPayload,
+  KaspaWallet,
+  KaspaWeb3Credentials,
   LockFunc,
   MFAChallengeAndVerifyParams,
   MFAChallengeParams,
@@ -138,6 +140,12 @@ import {
   SiweMessage,
   toHex,
 } from './lib/web3/ethereum'
+import {
+  createSiwkMessage,
+  getAddress as getKaspaAddress,
+  NetworkId,
+  SiwkMessage,
+} from './lib/web3/kaspa'
 import {
   deserializeCredentialCreationOptions,
   deserializeCredentialRequestOptions,
@@ -686,8 +694,8 @@ export default class GoTrueClient {
 
   /**
    * Signs in a user by verifying a message signed by the user's private key.
-   * Supports Ethereum (via Sign-In-With-Ethereum) & Solana (Sign-In-With-Solana) standards,
-   * both of which derive from the EIP-4361 standard
+   * Supports Ethereum (via Sign-In-With-Ethereum), Solana (Sign-In-With-Solana), Kaspa (Sign-In-With-Kaspa) standards,
+   * which derive from the EIP-4361 standard
    * With slight variation on Solana's side.
    * @reference https://eips.ethereum.org/EIPS/eip-4361
    */
@@ -705,6 +713,8 @@ export default class GoTrueClient {
         return await this.signInWithEthereum(credentials)
       case 'solana':
         return await this.signInWithSolana(credentials)
+      case 'kaspa':
+        return await this.signInWithKaspa(credentials)
       default:
         throw new Error(`@supabase/auth-js: Unsupported chain "${chain}"`)
     }
@@ -1007,6 +1017,139 @@ export default class GoTrueClient {
             message,
             signature: bytesToBase64URL(signature),
 
+            ...(credentials.options?.captchaToken
+              ? { gotrue_meta_security: { captcha_token: credentials.options?.captchaToken } }
+              : null),
+          },
+          xform: _sessionResponse,
+        }
+      )
+      if (error) {
+        throw error
+      }
+      if (!data || !data.session || !data.user) {
+        return {
+          data: { user: null, session: null },
+          error: new AuthInvalidTokenResponseError(),
+        }
+      }
+      if (data.session) {
+        await this._saveSession(data.session)
+        await this._notifyAllSubscribers('SIGNED_IN', data.session)
+      }
+      return { data: { ...data }, error }
+    } catch (error) {
+      if (isAuthError(error)) {
+        return { data: { user: null, session: null }, error }
+      }
+
+      throw error
+    }
+  }
+
+  private async signInWithKaspa(
+    credentials: KaspaWeb3Credentials
+  ): Promise<
+    | { data: { session: Session; user: User }; error: null }
+    | { data: { session: null; user: null }; error: AuthError }
+  > {
+    // TODO: flatten type
+    let message: string
+    let signature: Hex
+
+    if ('message' in credentials) {
+      message = credentials.message
+      signature = credentials.signature
+    } else {
+      const { chain, wallet, statement, options } = credentials
+
+      let resolvedWallet: KaspaWallet
+
+      if (!isBrowser()) {
+        if (typeof wallet !== 'object' || !options?.url) {
+          throw new Error(
+            '@supabase/auth-js: Both wallet and url must be specified in non-browser environments.'
+          )
+        }
+
+        resolvedWallet = wallet
+      } else if (typeof wallet === 'object') {
+        resolvedWallet = wallet
+      } else {
+        const windowAny = window as any
+
+        if (
+          'kasware' in windowAny &&
+          typeof windowAny.kasware === 'object' &&
+          'requestAccounts' in windowAny.kasware &&
+          typeof windowAny.kasware.requestAccounts === 'function' &&
+          'getNetwork' in windowAny.kasware &&
+          typeof windowAny.kasware.getNetwork === 'function' &&
+          'signMessage' in windowAny.kasware &&
+          typeof windowAny.kasware.signMessage === 'function'
+        ) {
+          resolvedWallet = windowAny.kasware
+        } else {
+          throw new Error(
+            `@supabase/auth-js: No compatible Kaspa wallet interface on the window object (window.kasware) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'kaspa', wallet: resolvedUserWallet }) instead.`
+          )
+        }
+      }
+
+      const url = new URL(options?.url ?? window.location.href)
+
+      const accounts = await resolvedWallet
+        .requestAccounts()
+        .then((accs) => accs as string[])
+        .catch(() => {
+          throw new Error(`@supabase/auth-js: Wallet method requestAccounts is missing or invalid`)
+        })
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error(
+          `@supabase/auth-js: No accounts available. Please ensure the wallet is connected.`
+        )
+      }
+
+      const address = getKaspaAddress(accounts[0])
+
+      let networkId = options?.signInWithKaspa?.networkId
+      if (!networkId) {
+        const walletNetworkId = await resolvedWallet.getNetwork()
+        networkId = walletNetworkId as NetworkId
+      }
+
+      const siwkMessage: SiwkMessage = {
+        domain: url.host,
+        address: address,
+        statement: statement,
+        uri: url.href,
+        version: '0', // @TODO: automate this
+        networkId: networkId,
+        nonce: options?.signInWithKaspa?.nonce,
+        issuedAt: options?.signInWithKaspa?.issuedAt ?? new Date(),
+        expirationTime: options?.signInWithKaspa?.expirationTime,
+        notBefore: options?.signInWithKaspa?.notBefore,
+        requestId: options?.signInWithKaspa?.requestId,
+        resources: options?.signInWithKaspa?.resources,
+      }
+
+      message = createSiwkMessage(siwkMessage)
+
+      signature = (await resolvedWallet.signMessage(message, 'schnorr')) as Hex
+    }
+
+    try {
+      const { data, error } = await _request(
+        this.fetch,
+        'POST',
+        `${this.url}/token?grant_type=web3`,
+        {
+          headers: this.headers,
+          body: {
+            chain: 'kaspa',
+            message,
+            signature,
             ...(credentials.options?.captchaToken
               ? { gotrue_meta_security: { captcha_token: credentials.options?.captchaToken } }
               : null),
