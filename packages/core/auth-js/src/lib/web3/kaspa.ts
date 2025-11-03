@@ -5,7 +5,7 @@ export type SimnetAddress = `kaspasim:${string}`
 
 export type Address = MainnetAddress | TestnetAddress | DevnetAddress | SimnetAddress
 
-export type NetworkId = 'mainnet' | 'testnet-10' | 'devnet' | 'simnet'
+export type NetworkId = 'kaspa_mainnet' | 'kaspa_testnet_10' | 'kaspa_devnet' | 'kaspa_simnet'
 
 // @TODO: Introduce KIP1193 standard instead of pointing specifically to Kasware
 // export type KIP1193RequestFn = (args: { method: string; params?: unknown }) => Promise<unknown>
