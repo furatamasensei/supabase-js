@@ -75,7 +75,7 @@ export type SiwkMessage = {
   /**
    * The current version of the SIWK Message.
    */
-  version: '1' | '0'
+  version: '1'
 }
 
 export type KaspaSignInInput = SiwkMessage
@@ -124,9 +124,9 @@ export function createSiwkMessage(parameters: SiwkMessage): string {
     if (!uri)
       throw new Error(`@supabase/auth-js: Invalid SIWK message field "uri". URI must be provided.`)
 
-    if (['0', '1'].indexOf(version) === -1)
+    if (version !== '1')
       throw new Error(
-        `@supabase/auth-js: Invalid SIWK message field "version". Version must be '0' or '1'. Provided value: ${version}`
+        `@supabase/auth-js: Invalid SIWK message field "version". Version must be '1'. Provided value: ${version}`
       )
 
     if (parameters.statement?.includes('\n'))

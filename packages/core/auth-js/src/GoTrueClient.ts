@@ -1124,7 +1124,7 @@ export default class GoTrueClient {
         address: address,
         statement: statement,
         uri: url.href,
-        version: '0', // @TODO: automate this
+        version: '1',
         networkId: networkId,
         nonce: options?.signInWithKaspa?.nonce,
         issuedAt: options?.signInWithKaspa?.issuedAt ?? new Date(),
