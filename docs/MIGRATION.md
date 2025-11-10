@@ -4,6 +4,89 @@
 
 > **📦 Note for Package Users:** If you install and use these packages via npm, **nothing changed**. This guide is for contributors who develop and maintain these libraries.
 
+---
+
+## 🔴 Node.js 18 Support Dropped
+
+**Effective Date:** October 31, 2025
+
+### What Changed
+
+Starting with version `2.79.0`, all Supabase JavaScript libraries require **Node.js 20 or later**. The `@supabase/node-fetch` polyfill has been removed, and native fetch support is now required.
+
+### Why?
+
+Node.js 18 reached end-of-life on April 30, 2025, and no longer receives security updates or critical fixes. Node.js 20+ includes native fetch support, eliminating the need for polyfills and reducing bundle size.
+
+### Affected Libraries
+
+- `@supabase/supabase-js`
+- `@supabase/auth-js`
+- `@supabase/postgrest-js`
+- `@supabase/realtime-js`
+- `@supabase/storage-js`
+- `@supabase/functions-js`
+
+### Migration Guide
+
+**1. Upgrade Node.js** to version 20 or later:
+
+```bash
+# Check your current version
+node --version
+
+# If < 20.0.0, upgrade Node.js
+# Via nvm (recommended):
+nvm install 20
+nvm use 20
+
+# Or download from https://nodejs.org/
+```
+
+**2. Update your package.json** to use the latest version:
+
+```bash
+npm install @supabase/supabase-js@latest
+# Or for individual packages:
+npm install @supabase/auth-js@latest
+```
+
+**3. No code changes required** - The APIs remain unchanged. Your existing code will work as-is once you upgrade Node.js.
+
+### Supported Environments
+
+- **Node.js 20+** - Native fetch support
+- **Modern browsers** - All modern browsers
+- **Deno 1.0+** - Native fetch built-in
+- **Bun 0.1+** - Native fetch built-in
+- **React Native** - With fetch polyfill provided by the framework
+- **Expo** - With fetch polyfill provided by the framework
+
+### Troubleshooting
+
+**Error: `fetch is not defined`**
+
+This means you're running Node.js < 20. Solutions:
+
+1. Upgrade to Node.js 20+ (recommended)
+2. If you absolutely cannot upgrade, use an older version of the libraries (see below)
+
+**Using Node.js 18 (Not Recommended)**
+
+If you must use Node.js 18, install the last version that supported it:
+
+```bash
+npm install @supabase/supabase-js@2.78.0
+```
+
+⚠️ **Warning:** Using Node.js 18 is not recommended as it no longer receives security updates.
+
+### Discussion
+
+For more details, see the [deprecation announcement](https://github.com/orgs/supabase/discussions/37217).
+
+---
+
 ## 🎯 Who This Guide Is For
 
 **This guide is for contributors**, including:

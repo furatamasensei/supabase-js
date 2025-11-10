@@ -1,3 +1,98 @@
+## 2.81.0 (2025-11-10)
+
+### 🚀 Features
+
+- **realtime:** implement V2 serializer ([#1829](https://github.com/supabase/supabase-js/pull/1829))
+
+### 🩹 Fixes
+
+- **auth:** make webauthn param optional and move register params to webauthn ([#1765](https://github.com/supabase/supabase-js/pull/1765))
+- **auth:** add providers type to UserAppMetadata interface ([#1760](https://github.com/supabase/supabase-js/pull/1760))
+- **auth:** use direct attestation for registration/authentication ([#1764](https://github.com/supabase/supabase-js/pull/1764))
+- **functions:** add configurable timeout and normalize abort/timeout errors as FunctionsFetchError ([#1837](https://github.com/supabase/supabase-js/pull/1837))
+- **realtime:** ensure WebSocket connections are properly closed in teardown ([#1841](https://github.com/supabase/supabase-js/pull/1841))
+
+### ❤️ Thank You
+
+- Eduardo Gurgel
+- Katerina Skroumpelou @mandarini
+- Tanmay Sharma @tanmaysharma2001
+
+## 2.80.0 (2025-11-06)
+
+### 🚀 Features
+
+- **auth:** add TypeScript types for documented JWT claims fields ([#1802](https://github.com/supabase/supabase-js/pull/1802))
+
+### 🩹 Fixes
+
+- **auth:** only warn if multiple clients share a storage-key ([#1767](https://github.com/supabase/supabase-js/pull/1767))
+
+### ❤️ Thank You
+
+- Steve Hall @sh41
+- Sumit Kumar @Software-Engineering-Project-Team-Bob
+
+## 2.79.0 (2025-11-04)
+
+### 🚀 Features
+
+- **auth:** support throwing errors instead of returning them ([#1766](https://github.com/supabase/supabase-js/pull/1766))
+- **repo:** remove node-fetch dependency, require Node.js 20+ ([#1830](https://github.com/supabase/supabase-js/pull/1830))
+
+### ❤️ Thank You
+
+- Katerina Skroumpelou @mandarini
+
+## 2.78.0 (2025-10-30)
+
+### 🚀 Features
+
+- **auth:** add OAuth 2.1 authorization consent management API calls ([#1793](https://github.com/supabase/supabase-js/pull/1793))
+- **auth:** add OAuth client update support ([#1812](https://github.com/supabase/supabase-js/pull/1812))
+- **auth:** refactor getAuthenticatorAssuranceLevel method ([#1822](https://github.com/supabase/supabase-js/pull/1822))
+
+### 🩹 Fixes
+
+- **auth:** remove redirection in `getAuthorizationDetails` ([#1811](https://github.com/supabase/supabase-js/pull/1811))
+- **auth:** move session warning proxy from session to user object ([#1817](https://github.com/supabase/supabase-js/pull/1817))
+
+### ❤️ Thank You
+
+- Cemal Kılıç @cemalkilic
+- Katerina Skroumpelou @mandarini
+- Stojan Dimitrovski @hf
+
+## 2.77.0 (2025-10-29)
+
+### 🚀 Features
+
+- **auth:** add OAuth 2.1 authorization consent management API calls ([#1793](https://github.com/supabase/supabase-js/pull/1793))
+- **auth:** add OAuth client update support ([#1812](https://github.com/supabase/supabase-js/pull/1812))
+- **storage:** add support for bucket pagination and sorting ([#1790](https://github.com/supabase/supabase-js/pull/1790))
+
+### 🩹 Fixes
+
+- **auth:** handle 204 No Content response in OAuth client delete ([#1786](https://github.com/supabase/supabase-js/pull/1786))
+- **auth:** remove redirection in `getAuthorizationDetails` ([#1811](https://github.com/supabase/supabase-js/pull/1811))
+- **postgrest:** add incoming major 14 support ([#1807](https://github.com/supabase/supabase-js/pull/1807))
+- **repo:** add missing tslib dependency to core packages ([#1789](https://github.com/supabase/supabase-js/pull/1789))
+- **repo:** cleanup package-lock.json and bun.lock ([#1799](https://github.com/supabase/supabase-js/pull/1799))
+- **storage:** remove unnecessary filter ([#1809](https://github.com/supabase/supabase-js/pull/1809))
+
+### 🔥 Performance
+
+- precompile RegExp ([#1806](https://github.com/supabase/supabase-js/pull/1806))
+
+### ❤️ Thank You
+
+- Andrew Valleteau @avallete
+- Cemal Kılıç @cemalkilic
+- Fabrizio @fenos
+- Katerina Skroumpelou @mandarini
+- Kevin Grüneberg @kevcodez
+- Lenny @itslenny
+
 ## 2.76.1 (2025-10-21)
 
 ### 🩹 Fixes
