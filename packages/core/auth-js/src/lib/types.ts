@@ -1,6 +1,7 @@
 import { AuthError } from './errors'
 import { Fetch } from './fetch'
 import { EIP1193Provider, EthereumSignInInput, Hex } from './web3/ethereum'
+import { KaspaSignInInput, KIP1193Provider } from './web3/kaspa'
 import type { SolanaSignInInput, SolanaSignInOutput } from './web3/solana'
 import {
   ServerCredentialCreationOptions,
@@ -704,7 +705,45 @@ export type EthereumWeb3Credentials =
       }
     }
 
-export type Web3Credentials = SolanaWeb3Credentials | EthereumWeb3Credentials
+export type KaspaWallet = KIP1193Provider
+
+export type KaspaWeb3Credentials =
+  | {
+      chain: 'kaspa'
+
+      /** Wallet interface to use. If not specified will default to `window.kasware`. */
+      wallet?: KaspaWallet
+
+      /** Optional statement to include in the Sign in with Kaspa message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
+      statement?: string
+
+      options?: {
+        /** URL to use with the wallet interface. Some wallets do not allow signing a message for URLs different from the current page. */
+        url?: string
+
+        /** Verification token received when the user completes the captcha on the site. */
+        captchaToken: string
+
+        signInWithKaspa?: Partial<
+          Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement'>
+        >
+      }
+    }
+  | {
+      chain: 'kaspa'
+
+      /** Sign in with Kaspa compatible message. Must include `Issued At`, `URI` and `Version`. */
+      message: string
+
+      /** Kaspa curve (secp256k1) signature of the message. */
+      signature: Hex
+
+      options?: {
+        captchaToken?: string
+      }
+    }
+
+export type Web3Credentials = SolanaWeb3Credentials | EthereumWeb3Credentials | KaspaWeb3Credentials
 
 export type VerifyOtpParams = VerifyMobileOtpParams | VerifyEmailOtpParams | VerifyTokenHashParams
 export interface VerifyMobileOtpParams {
