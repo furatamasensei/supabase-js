@@ -90,7 +90,7 @@ export function getAddress(address: string): Address {
   } else if (address.startsWith('kaspasim:')) {
     return address as SimnetAddress
   } else {
-    throw new Error('Invalid Kaspa address format')
+    throw new Error(`@supabase/auth-js: Address "${address}" is invalid.`)
   }
 }
 
