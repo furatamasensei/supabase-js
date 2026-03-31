@@ -61,7 +61,7 @@ describe('kaspa', () => {
       const message = createSiwkMessage(baseMessage)
 
       expect(message).toContain('example.com wants you to sign in with your Kaspa account:')
-      expect(message).toContain('0x742d35cc6634c0532925a3b8d4c9db96c4b4d8b6')
+      expect(message).toContain('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')
       expect(message).toContain('URI: https://example.com')
       expect(message).toContain('Version: 1')
       expect(message).toContain('Network ID: kaspa_mainnet')
