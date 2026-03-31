@@ -154,7 +154,7 @@ describe('kaspa', () => {
       }
 
       expect(() => createSiwkMessage(invalidStatement)).toThrow(
-        '@supabase/auth-js: Invalid SIWE message field "statement". Statement must not include \'\\n\'. Provided value: Line 1\nLine 2'
+        '@supabase/auth-js: Invalid SIWK message field "statement". Statement must not include \'\\n\'. Provided value: Line 1\nLine 2'
       )
     })
 
