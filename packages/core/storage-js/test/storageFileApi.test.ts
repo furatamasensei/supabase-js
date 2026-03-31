@@ -3,15 +3,15 @@ import * as fsp from 'fs/promises'
 import * as fs from 'fs'
 import * as path from 'path'
 import assert from 'assert'
-import ReadableStream from 'node:stream'
-import { StorageApiError, StorageError } from '../src/lib/errors'
+import { StorageApiError, StorageError } from '../src/lib/common/errors'
 import BlobDownloadBuilder from '../src/packages/BlobDownloadBuilder'
 import StreamDownloadBuilder from '../src/packages/StreamDownloadBuilder'
 
-// TODO: need to setup storage-api server for this test
-const URL = 'http://localhost:8000/storage/v1'
+// Supabase CLI local development defaults
+const URL = 'http://127.0.0.1:54321/storage/v1'
+// service_role key - bypasses RLS for testing
 const KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYXV0aGVudGljYXRlZCIsInN1YiI6IjMxN2VhZGNlLTYzMWEtNDQyOS1hMGJiLWYxOWE3YTUxN2I0YSIsImlhdCI6MTcxMzQzMzgwMCwiZXhwIjoyMDI5MDA5ODAwfQ.jVFIR-MB7rNfUuJaUH-_CyDFZEHezzXiqcRcdrGd29o'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
 
 const storage = new StorageClient(URL, { Authorization: `Bearer ${KEY}` })
 
@@ -121,6 +121,17 @@ describe('Object API', () => {
       expect(res.data?.signedUrl).toContain(`${URL}/render/image/sign/${bucketName}/${uploadPath}`)
     })
 
+    test('sign url with empty transform object does not use render endpoint', async () => {
+      await storage.from(bucketName).upload(uploadPath, file)
+      const res = await storage.from(bucketName).createSignedUrl(uploadPath, 2000, {
+        transform: {},
+      })
+
+      expect(res.error).toBeNull()
+      expect(res.data?.signedUrl).toContain(`${URL}/object/sign/${bucketName}/${uploadPath}`)
+      expect(res.data?.signedUrl).not.toContain('/render/image/sign/')
+    })
+
     test('sign url with custom filename for download', async () => {
       await storage.from(bucketName).upload(uploadPath, file)
       const res = await storage.from(bucketName).createSignedUrl(uploadPath, 2000, {
@@ -138,7 +149,7 @@ describe('Object API', () => {
       const bucketName = await newBucket()
       const formData = new FormData()
       // FormData needs a proper file field, not 'file'
-      formData.append('', new Blob([file]), 'file.txt')
+      formData.append('', new Blob([file.buffer as ArrayBuffer]), 'file.txt')
 
       const res = await storage.from(bucketName).upload(uploadPath, formData)
       expect(res.error).toBeNull()
@@ -152,13 +163,13 @@ describe('Object API', () => {
     })
 
     test('uploading using array buffer', async () => {
-      const res = await storage.from(bucketName).upload(uploadPath, file.buffer)
+      const res = await storage.from(bucketName).upload(uploadPath, file.buffer as ArrayBuffer)
       expect(res.error).toBeNull()
       expect(res.data?.path).toEqual(uploadPath)
     })
 
     test('uploading using blob', async () => {
-      const fileBlob = new Blob([file])
+      const fileBlob = new Blob([file.buffer as ArrayBuffer])
       const res = await storage.from(bucketName).upload(uploadPath, fileBlob)
       expect(res.error).toBeNull()
       expect(res.data?.path).toEqual(uploadPath)
@@ -336,8 +347,18 @@ describe('Object API', () => {
       expect(res.data).toEqual([
         expect.objectContaining({
           name: uploadPath.replace('testpath/', ''),
+          id: expect.any(String), // Files should have non-null id
+          metadata: expect.any(Object), // Files should have metadata
         }),
       ])
+      assert(res.data)
+
+      // Verify files have non-null required fields
+      const fileObj = res.data[0]
+      expect(fileObj.id).not.toBeNull()
+      expect(fileObj.metadata).not.toBeNull()
+      expect(fileObj.updated_at).not.toBeNull()
+      expect(fileObj.created_at).not.toBeNull()
     })
 
     test('list objects V2', async () => {
@@ -402,13 +423,14 @@ describe('Object API', () => {
         let hasNext = true
         let pages = 0
         while (hasNext) {
-          const res = await storage.from(bucketName).listV2({
+          const options = {
             prefix: 'testpath/',
             with_delimiter: true,
             limit: 2,
-            cursor,
-            sortBy,
-          })
+            ...(cursor ? { cursor } : {}),
+            ...(sortBy ? { sortBy } : {}),
+          }
+          const res = await storage.from(bucketName).listV2(options)
 
           expect(res.error).toBeNull()
           expect(res.data?.objects).toHaveLength(2)
@@ -520,10 +542,17 @@ describe('Object API', () => {
       expect(res.error).toBeNull()
       expect(res.data).toEqual([
         expect.objectContaining({
-          bucket_id: bucketName,
           name: uploadPath,
+          id: expect.any(String), // Verify it's a file, not a folder
         }),
       ])
+      assert(res.data)
+
+      // bucket_id may be present in remove() responses (deprecated field)
+      // If present, verify it matches
+      if (res.data[0].bucket_id) {
+        expect(res.data[0].bucket_id).toBe(bucketName)
+      }
     })
 
     test('get object info', async () => {
@@ -545,6 +574,20 @@ describe('Object API', () => {
           version: expect.any(String),
         })
       )
+      assert(res.data)
+
+      // Verify FileObjectV2 required fields
+      expect(res.data.id).toBeDefined()
+      expect(res.data.bucketId).toBeDefined()
+      expect(res.data.lastModified).toBeDefined() // Should have this
+      expect(res.data.size).toBeGreaterThan(0)
+      expect(res.data.contentType).toBeDefined()
+      expect(res.data.cacheControl).toBeDefined()
+      expect(res.data.etag).toBeDefined()
+
+      // Verify updated_at does NOT exist (API returns camelCase, but the raw type shouldn't have it)
+      // Note: The info() method uses Camelize so we check the camelCase version
+      expect(res.data).not.toHaveProperty('updatedAt')
 
       // throws when .throwOnError is enabled
       await expect(storage.from(bucketName).throwOnError().info('non-existent')).rejects.toThrow()
@@ -665,6 +708,84 @@ describe('Object API', () => {
   })
 })
 
+describe('download with fetch parameters', () => {
+  let bucketName: string
+  let file: Buffer
+  let uploadPath: string
+  beforeEach(async () => {
+    bucketName = await newBucket()
+    file = await fsp.readFile(uploadFilePath('sadcat.jpg'))
+    uploadPath = `testpath/file-${Date.now()}.jpg`
+  })
+  it('download with abort signal', async () => {
+    const uploadRes = await storage.from(bucketName).upload(uploadPath, file)
+    expect(uploadRes.error).toBeNull()
+
+    const controller = new AbortController()
+    controller.abort() // Abort before download to prevent race condition
+
+    const { data, error } = await storage
+      .from(bucketName)
+      .download(uploadPath, {}, { signal: controller.signal })
+
+    expect(data).toBeNull()
+    expect(error).not.toBeNull()
+    expect(error?.message).toContain('abort')
+  })
+
+  it('download with cache control', async () => {
+    const uploadRes = await storage.from(bucketName).upload(uploadPath, file)
+    expect(uploadRes.error).toBeNull()
+
+    const originalFetch = global.fetch
+    const mockFetch = jest.fn(originalFetch)
+    global.fetch = mockFetch
+
+    try {
+      const { data, error } = await storage
+        .from(bucketName)
+        .download(uploadPath, {}, { cache: 'no-store' })
+
+      expect(error).toBeNull()
+      expect(data).not.toBeNull()
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining(uploadPath),
+        expect.objectContaining({ cache: 'no-store' })
+      )
+    } finally {
+      global.fetch = originalFetch
+    }
+  })
+
+  it('download with transform and fetch parameters', async () => {
+    const uploadRes = await storage.from(bucketName).upload(uploadPath, file)
+    expect(uploadRes.error).toBeNull()
+
+    const controller = new AbortController()
+
+    const { data, error } = await storage
+      .from(bucketName)
+      .download(
+        uploadPath,
+        { transform: { width: 100, height: 100 } },
+        { signal: controller.signal, cache: 'no-store' }
+      )
+
+    expect(error).toBeNull()
+    expect(data).not.toBeNull()
+  })
+
+  it('download without parameters (backward compatibility)', async () => {
+    const uploadRes = await storage.from(bucketName).upload(uploadPath, file)
+    expect(uploadRes.error).toBeNull()
+
+    const { data, error } = await storage.from(bucketName).download(uploadPath)
+
+    expect(error).toBeNull()
+    expect(data).not.toBeNull()
+  })
+})
+
 describe('error handling', () => {
   let mockError: Error
 
@@ -772,7 +893,7 @@ describe('StorageFileApi Edge Cases', () => {
     let mockPost: jest.SpyInstance
 
     beforeEach(() => {
-      const fetchLib = require('../src/lib/fetch')
+      const fetchLib = require('../src/lib/common/fetch')
       mockPut = jest.spyOn(fetchLib, 'put').mockResolvedValue({
         id: 'test-id',
         path: 'test-path',
@@ -809,6 +930,29 @@ describe('StorageFileApi Edge Cases', () => {
       expect(mockPut).toHaveBeenCalled()
       const [, , body] = mockPut.mock.calls[0]
       expect(body).toBe(testFormData)
+    })
+
+    test('uploadToSignedUrl uses default cacheControl when not provided', async () => {
+      const testBlob = new Blob(['test content'], { type: 'text/plain' })
+
+      await storage.from('test-bucket').uploadToSignedUrl('test-path', 'test-token', testBlob)
+
+      expect(mockPut).toHaveBeenCalled()
+      const [, , body] = mockPut.mock.calls[0]
+      expect(body.get('cacheControl')).not.toBe('undefined')
+      expect(body.get('cacheControl')).toBe('3600')
+    })
+
+    test('uploadToSignedUrl respects custom cacheControl', async () => {
+      const testBlob = new Blob(['test content'], { type: 'text/plain' })
+
+      await storage
+        .from('test-bucket')
+        .uploadToSignedUrl('test-path', 'test-token', testBlob, { cacheControl: '7200' })
+
+      expect(mockPut).toHaveBeenCalled()
+      const [, , body] = mockPut.mock.calls[0]
+      expect(body.get('cacheControl')).toBe('7200')
     })
 
     test('upload with metadata', async () => {

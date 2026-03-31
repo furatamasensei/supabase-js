@@ -5,16 +5,31 @@ import { Json } from '../src/select-query-parser/types'
 import { Database } from './types.override'
 import { Database as DatabaseWithOptions } from './types.override-with-options-postgrest14'
 
-const REST_URL = 'http://localhost:3000'
+const REST_URL = 'http://localhost:54321/rest/v1'
 const postgrest = new PostgrestClient<Database>(REST_URL)
 const postgrestWithOptions = new PostgrestClient<DatabaseWithOptions>(REST_URL)
 
-// table invalid type
+// table and view name type safety
 {
   // @ts-expect-error Argument of type '42' is not assignable to parameter of type
   postgrest.from(42)
   // @ts-expect-error Argument of type '"nonexistent_table"' is not assignable to parameter of type
   postgrest.from('nonexistent_table')
+  // @ts-expect-error Argument of type '"nonexistent_view"' is not assignable to parameter of type
+  postgrest.from('nonexistent_view')
+}
+
+// `.eq()` and `.neq()` reject invalid column name literals
+{
+  // @ts-expect-error Argument of type '"INVALID"' is not assignable to parameter
+  postgrest.from('users').select().eq('INVALID', 'test')
+  // @ts-expect-error Argument of type '"INVALID"' is not assignable to parameter
+  postgrest.from('users').select().neq('INVALID', 'test')
+
+  // Dynamic string variables should still work (falls through to string branch)
+  const col: string = 'username'
+  postgrest.from('users').select().eq(col, 'foo')
+  postgrest.from('users').select().neq(col, 'foo')
 }
 
 // `null` can't be used with `.eq()`

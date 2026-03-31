@@ -1,7 +1,7 @@
 import { PostgrestClient } from '../src/index'
 import { Database } from './types.override'
 
-const postgrest = new PostgrestClient<Database>('http://localhost:3000')
+const postgrest = new PostgrestClient<Database>('http://localhost:54321/rest/v1')
 
 test('not', async () => {
   const res = await postgrest.from('users').select('status').not('status', 'eq', 'OFFLINE')
@@ -346,6 +346,20 @@ test('in', async () => {
           "status": "ONLINE",
         },
       ],
+      "error": null,
+      "status": 200,
+      "statusText": "OK",
+    }
+  `)
+})
+
+test('notIn', async () => {
+  const statuses = ['ONLINE', 'OFFLINE'] as const
+  const res = await postgrest.from('users').select('status').notIn('status', statuses)
+  expect(res).toMatchInlineSnapshot(`
+    {
+      "count": null,
+      "data": [],
       "error": null,
       "status": 200,
       "statusText": "OK",
@@ -772,6 +786,57 @@ test('filter on rpc', async () => {
     {
       "count": null,
       "data": [],
+      "error": null,
+      "status": 200,
+      "statusText": "OK",
+    }
+  `)
+})
+
+test('isDistinct', async () => {
+  const res = await postgrest.from('users').select('username').isDistinct('status', 'ONLINE')
+  expect(res).toMatchInlineSnapshot(`
+    {
+      "count": null,
+      "data": [
+        {
+          "username": "kiwicopple",
+        },
+      ],
+      "error": null,
+      "status": 200,
+      "statusText": "OK",
+    }
+  `)
+})
+
+test('regexMatch', async () => {
+  const res = await postgrest.from('users').select('username').regexMatch('username', '^sup')
+  expect(res).toMatchInlineSnapshot(`
+    {
+      "count": null,
+      "data": [
+        {
+          "username": "supabot",
+        },
+      ],
+      "error": null,
+      "status": 200,
+      "statusText": "OK",
+    }
+  `)
+})
+
+test('regexIMatch', async () => {
+  const res = await postgrest.from('users').select('username').regexIMatch('username', '^SUP')
+  expect(res).toMatchInlineSnapshot(`
+    {
+      "count": null,
+      "data": [
+        {
+          "username": "supabot",
+        },
+      ],
       "error": null,
       "status": 200,
       "statusText": "OK",

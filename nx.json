@@ -50,6 +50,7 @@
       "{projectRoot}/webpack.config.[jt]s",
       "{projectRoot}/vite.config.[jt]s",
       "{projectRoot}/rollup.config.[jt]s",
+      "{projectRoot}/tsdown.config.[jt]s",
       "{projectRoot}/tsconfig*.json",
       "{projectRoot}/package.json",
       "sharedGlobals"
@@ -74,30 +75,6 @@
       "cache": true,
       "outputs": ["{projectRoot}/dist"]
     },
-    "build:main": {
-      "inputs": ["production", "^production", "buildConfig"],
-      "dependsOn": ["^build:main"],
-      "cache": true,
-      "outputs": ["{projectRoot}/dist/main", "{projectRoot}/dist/tsconfig.tsbuildinfo"]
-    },
-    "build:module": {
-      "inputs": ["production", "^production", "buildConfig"],
-      "dependsOn": ["^build:module"],
-      "cache": true,
-      "outputs": ["{projectRoot}/dist/module", "{projectRoot}/dist/tsconfig.module.tsbuildinfo"]
-    },
-    "build:umd": {
-      "inputs": ["production", "^production", "buildConfig"],
-      "dependsOn": ["^build:umd"],
-      "cache": true,
-      "outputs": ["{projectRoot}/dist/umd"]
-    },
-    "webpack:build": {
-      "inputs": ["production", "^production", "buildConfig"],
-      "dependsOn": ["^webpack:build"],
-      "cache": true,
-      "outputs": ["{projectRoot}/dist"]
-    },
     "test": {
       "inputs": ["testing", "^production"],
       "dependsOn": ["^build"],
@@ -106,7 +83,7 @@
     },
     "test:types": {
       "inputs": ["testing", "^production"],
-      "dependsOn": ["build:module"],
+      "dependsOn": ["build"],
       "cache": true,
       "outputs": []
     },
@@ -136,14 +113,59 @@
     },
     "test:ci": {
       "inputs": ["testing", "^production"],
+      "dependsOn": ["^build"],
       "cache": true,
       "outputs": ["{projectRoot}/coverage"]
     },
     "test:ci:postgrest": {
       "inputs": ["testing", "^production"],
       "dependsOn": ["build"],
-      "cache": true,
+      "cache": false,
       "outputs": ["{projectRoot}/coverage"]
+    },
+    "test:auth": {
+      "inputs": ["testing", "^production"],
+      "cache": false,
+      "outputs": ["{projectRoot}/coverage"]
+    },
+    "test:storage": {
+      "inputs": ["testing", "^production"],
+      "cache": false,
+      "outputs": ["{projectRoot}/coverage"]
+    },
+    "test:suite": {
+      "inputs": ["testing", "^production"],
+      "cache": false,
+      "outputs": ["{projectRoot}/coverage"]
+    },
+    "test:infra": {
+      "cache": false
+    },
+    "test:clean-pre": {
+      "cache": false
+    },
+    "test:clean-post": {
+      "cache": false
+    },
+    "test:docker": {
+      "inputs": ["testing", "^production"],
+      "cache": false
+    },
+    "test:docker:clean-pre": {
+      "cache": false
+    },
+    "test:docker:infra": {
+      "cache": false
+    },
+    "test:docker:suite": {
+      "inputs": ["testing", "^production"],
+      "cache": false
+    },
+    "test:docker:clean-post": {
+      "cache": false
+    },
+    "test:e2e": {
+      "cache": false
     },
     "vite:test": {
       "inputs": ["testing", "^production"],
@@ -232,16 +254,6 @@
       }
     },
     {
-      "plugin": "@nx/webpack/plugin",
-      "options": {
-        "buildTargetName": "webpack:build",
-        "serveTargetName": "serve",
-        "previewTargetName": "preview",
-        "buildDepsTargetName": "build-deps",
-        "watchDepsTargetName": "watch-deps"
-      }
-    },
-    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint",
@@ -253,6 +265,7 @@
     "projects": ["packages/core/*"],
     "projectsRelationship": "fixed",
     "releaseTagPatternCheckAllBranchesWhen": true,
+    "releaseTagPatternStrictPreid": true,
     "version": {
       "conventionalCommits": true
     },
