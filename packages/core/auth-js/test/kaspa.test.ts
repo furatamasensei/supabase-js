@@ -121,7 +121,7 @@ describe('kaspa', () => {
       }
 
       expect(() => createSiwkMessage(shortNonce)).toThrow(
-        '@supabase/auth-js: Invalid SIWE message field "nonce". Nonce must be at least 8 characters. Provided value: 123'
+        '@supabase/auth-js: Invalid SIWK message field "nonce". Nonce must be at least 8 characters. Provided value: 123'
       )
     })
 
