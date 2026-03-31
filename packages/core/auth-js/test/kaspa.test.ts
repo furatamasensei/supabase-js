@@ -57,7 +57,7 @@ describe('kaspa', () => {
       version: '1',
     }
 
-    test('should create basic SIWE message', () => {
+    test('should create basic SIWK message', () => {
       const message = createSiwkMessage(baseMessage)
 
       expect(message).toContain('example.com wants you to sign in with your Kaspa account:')
