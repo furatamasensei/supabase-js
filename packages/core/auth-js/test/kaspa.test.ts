@@ -132,7 +132,7 @@ describe('kaspa', () => {
       }
 
       expect(() => createSiwkMessage(invalidUri)).toThrow(
-        '@supabase/auth-js: Invalid SIWE message field "uri". URI must be provided.'
+        '@supabase/auth-js: Invalid SIWK message field "uri". URI must be provided.'
       )
     })
 
