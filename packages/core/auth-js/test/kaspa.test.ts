@@ -110,7 +110,7 @@ describe('kaspa', () => {
       }
 
       expect(() => createSiwkMessage(invalidDomain)).toThrow(
-        '@supabase/auth-js: Invalid SIWE message field "domain". Domain must be provided.'
+        '@supabase/auth-js: Invalid SIWK message field "domain". Domain must be provided.'
       )
     })
 
