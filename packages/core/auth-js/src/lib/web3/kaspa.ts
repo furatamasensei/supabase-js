@@ -62,9 +62,9 @@ export type SiwkMessage = {
    */
   address: Address
   /**
-   * The Kaspa network ID to which the session is bound.
+   * The Kaspa chain ID to which the session is bound.
    */
-  networkId: NetworkId
+  chainId: NetworkId
   /**
    * [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) authority that is requesting the signing.
    */
@@ -129,7 +129,7 @@ export function getAddress(address: string): Address {
 
 export function createSiwkMessage(parameters: SiwkMessage): string {
   const {
-    networkId,
+    chainId,
     domain,
     expirationTime,
     issuedAt = new Date(),
@@ -172,9 +172,9 @@ export function createSiwkMessage(parameters: SiwkMessage): string {
   const address = getAddress(parameters.address)
   const origin = scheme ? `${scheme}://${domain}` : domain
   const statement = parameters.statement ? `${parameters.statement}\n` : ''
-  const prefix = `${origin} wants you to sign in with your Kaspa account:\n${address}\n\n${statement}`
+  const prefix = `${origin} wants you to sign in with your Kaspa address:\n${address}\n\n${statement}`
 
-  let suffix = `URI: ${uri}\nVersion: ${version}\nNetwork ID: ${networkId}${nonce ? `\nNonce: ${nonce}` : ''
+  let suffix = `URI: ${uri}\nVersion: ${version}\nChain ID: ${chainId}${nonce ? `\nNonce: ${nonce}` : ''
     }\nIssued At: ${issuedAt.toISOString()}`
 
   if (expirationTime) suffix += `\nExpiration Time: ${expirationTime.toISOString()}`

@@ -810,8 +810,8 @@ export type KaspaWeb3Credentials =
       signInWithKaspa?: Partial<
         Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement' | 'address'>
       > & {
-        /** The Kaspa network ID. Required because KIP-12 providers do not expose a getNetwork method. */
-        networkId: NetworkId
+        /** The Kaspa chain ID. Required because KIP-12 providers do not expose a getNetwork method. */
+        chainId: NetworkId
       }
     }
   }

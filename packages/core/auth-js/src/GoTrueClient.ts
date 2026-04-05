@@ -1851,10 +1851,10 @@ export default class GoTrueClient {
 
       const address = getKaspaAddress(credentials.address)
 
-      const networkId = options?.signInWithKaspa?.networkId
-      if (!networkId) {
+      const chainId = options?.signInWithKaspa?.chainId
+      if (!chainId) {
         throw new Error(
-          `@supabase/auth-js: networkId is required in options.signInWithKaspa when signing in with Kaspa. KIP-12 providers do not expose a getNetwork method.`
+          `@supabase/auth-js: chainId is required in options.signInWithKaspa when signing in with Kaspa. KIP-12 providers do not expose a getNetwork method.`
         )
       }
 
@@ -1866,7 +1866,7 @@ export default class GoTrueClient {
         statement: statement,
         uri: url.href,
         version: '1',
-        networkId: networkId,
+        chainId: chainId,
         nonce: options?.signInWithKaspa?.nonce,
         issuedAt: options?.signInWithKaspa?.issuedAt ?? new Date(),
         expirationTime: options?.signInWithKaspa?.expirationTime,

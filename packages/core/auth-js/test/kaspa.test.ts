@@ -48,7 +48,7 @@ describe('kaspa', () => {
   describe('createSiwkMessage', () => {
     const baseMessage: SiwkMessage = {
       address: 'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn',
-      networkId: 'kaspa_mainnet',
+      chainId: 'kaspa_mainnet',
       domain: 'example.com',
       uri: 'https://example.com',
       version: '1',
@@ -57,11 +57,11 @@ describe('kaspa', () => {
     test('should create basic SIWK message', () => {
       const message = createSiwkMessage(baseMessage)
 
-      expect(message).toContain('example.com wants you to sign in with your Kaspa account:')
+      expect(message).toContain('example.com wants you to sign in with your Kaspa address:')
       expect(message).toContain('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')
       expect(message).toContain('URI: https://example.com')
       expect(message).toContain('Version: 1')
-      expect(message).toContain('Network ID: kaspa_mainnet')
+      expect(message).toContain('Chain ID: kaspa_mainnet')
       expect(message).toContain('Issued At:')
     })
 
@@ -190,7 +190,7 @@ describe('kaspa', () => {
     test('should format message correctly with all optional fields', () => {
       const fullMessage: SiwkMessage = {
         address: 'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn',
-        networkId: 'kaspa_mainnet',
+        chainId: 'kaspa_mainnet',
         domain: 'kaspa.example.com',
         uri: 'https://kaspa.example.com/auth',
         version: '1',
@@ -208,7 +208,7 @@ describe('kaspa', () => {
       // Check the structure
       const lines = message.split('\n')
       expect(lines[0]).toBe(
-        'https://kaspa.example.com wants you to sign in with your Kaspa account:'
+        'https://kaspa.example.com wants you to sign in with your Kaspa address:'
       )
       expect(lines[1]).toBe('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')
       expect(lines[2]).toBe('')
@@ -216,7 +216,7 @@ describe('kaspa', () => {
       expect(lines[4]).toBe('')
       expect(lines[5]).toBe('URI: https://kaspa.example.com/auth')
       expect(lines[6]).toBe('Version: 1')
-      expect(lines[7]).toBe('Network ID: kaspa_mainnet')
+      expect(lines[7]).toBe('Chain ID: kaspa_mainnet')
       expect(lines[8]).toBe('Nonce: abcdef1234567890')
       expect(lines[9]).toMatch(/^Issued At: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
       expect(lines[10]).toBe('Expiration Time: 2024-12-31T23:59:59.000Z')
