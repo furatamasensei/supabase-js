@@ -1875,9 +1875,15 @@ export default class GoTrueClient {
         resources: options?.signInWithKaspa?.resources,
       }
 
-      message = createSiwkMessage(siwkMessage)
+      try {
+        message = createSiwkMessage(siwkMessage)
 
-      signature = (await resolvedWallet.request('kaspa:signPersonal', [message])) as Hex
+        signature = (await resolvedWallet.request('kaspa:signPersonal', [message])) as Hex
+      } catch (error) {
+        throw new Error(
+          `@supabase/auth-js: Wallet failed upon signing. ${error instanceof Error ? error.message : String(error)}`
+        )
+      }
     }
 
     try {

@@ -2682,6 +2682,31 @@ describe('Web3 Authentication', () => {
     expect(data.session).toBeNull()
     expect(data.user).toBeNull()
   })
+
+  test('signInWithWeb3 should throw wrapped error when kaspa wallet signing fails', async () => {
+    const walletError = new Error('User rejected signing request')
+    const mockWallet = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      disconnect: jest.fn(),
+      request: jest.fn().mockRejectedValue(walletError),
+    }
+
+    await expect(
+      authClient.signInWithWeb3({
+        chain: 'kaspa',
+        address: 'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn',
+        wallet: mockWallet,
+        options: {
+          url: 'https://example.com',
+          signInWithKaspa: {
+            chainId: 'kaspa_mainnet',
+          },
+        },
+      })
+    ).rejects.toThrow(
+      '@supabase/auth-js: Wallet failed upon signing. User rejected signing request'
+    )
+  })
 })
 
 describe('ID Token Authentication', () => {
