@@ -57,6 +57,7 @@ test('order', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -79,6 +80,13 @@ test('order on multiple columns', async () => {
           "username": "supabot",
         },
         {
+          "channel_id": 3,
+          "data": null,
+          "id": 3,
+          "message": "Some message on channel without details",
+          "username": "supabot",
+        },
+        {
           "channel_id": 2,
           "data": null,
           "id": 2,
@@ -96,6 +104,7 @@ test('order on multiple columns', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -117,6 +126,7 @@ test('limit', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -159,6 +169,7 @@ test('range', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -178,6 +189,7 @@ test('single', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -197,6 +209,7 @@ test('single on insert', async () => {
       "error": null,
       "status": 201,
       "statusText": "Created",
+      "success": true,
     }
   `)
 
@@ -212,6 +225,7 @@ test('maybeSingle', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -234,8 +248,12 @@ test('maybeSingle', async () => {
       },
       "status": 406,
       "statusText": "Not Acceptable",
+      "success": false,
     }
   `)
+
+  // Clean up inserted users so they don't leak into other test files
+  await postgrest.from('users').delete().in('username', ['a', 'b'])
 })
 
 test('select on insert', async () => {
@@ -251,6 +269,7 @@ test('select on insert', async () => {
       "error": null,
       "status": 201,
       "statusText": "Created",
+      "success": true,
     }
   `)
 
@@ -272,6 +291,7 @@ test('select on rpc', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -286,12 +306,11 @@ test('csv', async () => {
     kiwicopple,,"[25,35)",OFFLINE,"'bat' 'cat'"
     awailas,,"[25,35)",ONLINE,"'bat' 'rat'"
     jsonuser,"{""foo"": {""bar"": {""nested"": ""value""}, ""baz"": ""string value""}}","[20,30)",ONLINE,"'json' 'test'"
-    dragarcia,,"[20,30)",ONLINE,"'fat' 'rat'"
-    a,,,ONLINE,
-    b,,,ONLINE,",
+    dragarcia,,"[20,30)",ONLINE,"'fat' 'rat'"",
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -323,6 +342,7 @@ test('geojson', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `)
 })
@@ -351,6 +371,7 @@ test('abort signal', async () => {
       },
       "status": 0,
       "statusText": "",
+      "success": false,
     }
   `
   )
@@ -377,6 +398,7 @@ test('explain with json/text format', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `
   )
@@ -415,6 +437,7 @@ test('explain with options', async () => {
       "error": null,
       "status": 200,
       "statusText": "OK",
+      "success": true,
     }
   `
   )
