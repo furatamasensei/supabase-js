@@ -1,7 +1,7 @@
 import { AuthError } from './errors'
 import { Fetch } from './fetch'
 import { EIP1193Provider, EthereumSignInInput, Hex } from './web3/ethereum'
-import { KaspaSignInInput, KIP12Provider } from './web3/kaspa'
+import { KaspaSignInInput, KIP12Provider, NetworkId } from './web3/kaspa'
 import type { SolanaSignInInput, SolanaSignInOutput } from './web3/solana'
 import {
   ServerCredentialCreationOptions,
@@ -791,10 +791,13 @@ export type KaspaWeb3Credentials =
   | {
     chain: 'kaspa'
 
-    /** Wallet interface to use. If not specified will default to `window.kasware`. */
+    /** The user's Kaspa address. Required because KIP-12 providers do not expose a getAccounts method. */
+    address: string
+
+    /** Wallet interface to use. If not specified, will be auto-detected via the KIP-12 `kaspa:requestProvider` event. */
     wallet?: KaspaWallet
 
-    /** Optional statement to include in the Sign in with Kaspa message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
+    /** Optional statement to include in the Sign in with Kaspa message. Must not include new line characters. */
     statement?: string
 
     options?: {
@@ -802,11 +805,14 @@ export type KaspaWeb3Credentials =
       url?: string
 
       /** Verification token received when the user completes the captcha on the site. */
-      captchaToken: string
+      captchaToken?: string
 
       signInWithKaspa?: Partial<
-        Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement'>
-      >
+        Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement' | 'address'>
+      > & {
+        /** The Kaspa network ID. Required because KIP-12 providers do not expose a getNetwork method. */
+        networkId: NetworkId
+      }
     }
   }
   | {
@@ -815,7 +821,7 @@ export type KaspaWeb3Credentials =
     /** Sign in with Kaspa compatible message. Must include `Issued At`, `URI` and `Version`. */
     message: string
 
-    /** Kaspa curve (secp256k1) signature of the message. */
+    /** Kaspa Schnorr signature of the message. */
     signature: Hex
 
     options?: {

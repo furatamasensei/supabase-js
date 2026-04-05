@@ -1,4 +1,11 @@
-import { createSiwkMessage, getAddress, type SiwkMessage } from '../src/lib/web3/kaspa'
+import {
+  createSiwkMessage,
+  getAddress,
+  getKaspaProvider,
+  type KIP12Provider,
+  type KIP12ProviderInfo,
+  type SiwkMessage,
+} from '../src/lib/web3/kaspa'
 
 describe('kaspa', () => {
   describe('getAddress', () => {
@@ -241,6 +248,91 @@ describe('kaspa', () => {
       const issuedAt = new Date(issuedAtMatch![1])
       expect(issuedAt.getTime()).toBeGreaterThanOrEqual(beforeTest.getTime())
       expect(issuedAt.getTime()).toBeLessThanOrEqual(afterTest.getTime())
+    })
+  })
+
+  describe('getKaspaProvider', () => {
+    let originalWindow: unknown
+
+    beforeEach(() => {
+      originalWindow = (global as any).window
+    })
+
+    afterEach(() => {
+      ;(global as any).window = originalWindow
+      jest.useRealTimers()
+    })
+
+    function makeMockWindow(
+      onDispatch?: (eventType: string) => void
+    ): { listeners: Record<string, Function[]>; win: any } {
+      const listeners: Record<string, Function[]> = {}
+      const win = {
+        setTimeout: (fn: Function, ms: number) => setTimeout(fn, ms),
+        clearTimeout: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+        addEventListener: (event: string, listener: Function) => {
+          if (!listeners[event]) listeners[event] = []
+          listeners[event].push(listener)
+        },
+        removeEventListener: (event: string, listener: Function) => {
+          if (listeners[event]) {
+            listeners[event] = listeners[event].filter((l) => l !== listener)
+          }
+        },
+        dispatchEvent: (event: { type: string }) => {
+          onDispatch?.(event.type)
+        },
+        CustomEvent: class {
+          type: string
+          constructor(type: string) {
+            this.type = type
+          }
+        },
+      }
+      return { listeners, win }
+    }
+
+    test('resolves with info and provider when kaspa:provider event fires', async () => {
+      const mockInfo: KIP12ProviderInfo = {
+        id: 'test-wallet',
+        name: 'Test Wallet',
+        icon: 'data:image/png;base64,abc',
+        methods: ['kaspa:connect', 'kaspa:signPersonal'],
+      }
+      const mockProvider: KIP12Provider = {
+        request: jest.fn(),
+        connect: jest.fn(),
+        disconnect: jest.fn(),
+      }
+
+      const { listeners, win } = makeMockWindow((eventType) => {
+        if (eventType === 'kaspa:requestProvider') {
+          // Simulate wallet injecting itself in response
+          Promise.resolve().then(() => {
+            for (const listener of listeners['kaspa:provider'] ?? []) {
+              listener({ detail: { info: mockInfo, provider: mockProvider } })
+            }
+          })
+        }
+      })
+
+      ;(global as any).window = win
+
+      const result = await getKaspaProvider()
+      expect(result.info).toEqual(mockInfo)
+      expect(result.provider).toBe(mockProvider)
+    })
+
+    test('rejects with "No KIP-12 provider found" when no wallet responds within timeout', async () => {
+      jest.useFakeTimers()
+
+      const { win } = makeMockWindow()
+      ;(global as any).window = win
+
+      const promise = getKaspaProvider()
+      jest.advanceTimersByTime(1500)
+
+      await expect(promise).rejects.toThrow('No KIP-12 provider found')
     })
   })
 })

@@ -150,6 +150,7 @@ import {
 import {
   createSiwkMessage,
   getAddress as getKaspaAddress,
+  getKaspaProvider,
   NetworkId,
   SiwkMessage,
 } from './lib/web3/kaspa'
@@ -1810,7 +1811,7 @@ export default class GoTrueClient {
       message = credentials.message
       signature = credentials.signature
     } else {
-      const { chain, wallet, statement, options } = credentials
+      const { wallet, statement, options } = credentials
 
       let resolvedWallet: KaspaWallet
 
@@ -1820,53 +1821,30 @@ export default class GoTrueClient {
             '@supabase/auth-js: Both wallet and url must be specified in non-browser environments.'
           )
         }
-
         resolvedWallet = wallet
       } else if (typeof wallet === 'object') {
         resolvedWallet = wallet
       } else {
-        const windowAny = window as any
-
-        if (
-          'kasware' in windowAny &&
-          typeof windowAny.kasware === 'object' &&
-          'requestAccounts' in windowAny.kasware &&
-          typeof windowAny.kasware.requestAccounts === 'function' &&
-          'getNetwork' in windowAny.kasware &&
-          typeof windowAny.kasware.getNetwork === 'function' &&
-          'signMessage' in windowAny.kasware &&
-          typeof windowAny.kasware.signMessage === 'function'
-        ) {
-          resolvedWallet = windowAny.kasware
-        } else {
+        const { provider } = await getKaspaProvider().catch(() => {
           throw new Error(
-            `@supabase/auth-js: No compatible Kaspa wallet interface on the window object (window.kasware) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'kaspa', wallet: resolvedUserWallet }) instead.`
+            `@supabase/auth-js: No KIP-12 Kaspa wallet detected. Make sure the user has a compatible wallet installed. Prefer passing the wallet interface directly to signInWithWeb3({ chain: 'kaspa', wallet: resolvedUserWallet }).`
           )
-        }
+        })
+        resolvedWallet = provider
       }
 
       const url = new URL(options?.url ?? window.location.href)
 
-      const accounts = await resolvedWallet
-        .requestAccounts()
-        .then((accs) => accs as string[])
-        .catch(() => {
-          throw new Error(`@supabase/auth-js: Wallet method requestAccounts is missing or invalid`)
-        })
+      const address = getKaspaAddress(credentials.address)
 
-      if (!accounts || accounts.length === 0) {
+      const networkId = options?.signInWithKaspa?.networkId
+      if (!networkId) {
         throw new Error(
-          `@supabase/auth-js: No accounts available. Please ensure the wallet is connected.`
+          `@supabase/auth-js: networkId is required in options.signInWithKaspa when signing in with Kaspa. KIP-12 providers do not expose a getNetwork method.`
         )
       }
 
-      const address = getKaspaAddress(accounts[0])
-
-      let networkId = options?.signInWithKaspa?.networkId
-      if (!networkId) {
-        const walletNetworkId = await resolvedWallet.getNetwork()
-        networkId = walletNetworkId as NetworkId
-      }
+      await resolvedWallet.connect()
 
       const siwkMessage: SiwkMessage = {
         domain: url.host,
@@ -1885,7 +1863,7 @@ export default class GoTrueClient {
 
       message = createSiwkMessage(siwkMessage)
 
-      signature = (await resolvedWallet.signMessage(message, 'schnorr')) as Hex
+      signature = (await resolvedWallet.request('kaspa:signPersonal', [message])) as Hex
     }
 
     try {

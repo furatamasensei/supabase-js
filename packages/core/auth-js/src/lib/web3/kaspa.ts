@@ -7,21 +7,54 @@ export type Address = MainnetAddress | TestnetAddress | DevnetAddress | SimnetAd
 
 export type NetworkId = 'kaspa_mainnet' | 'kaspa_testnet_10' | 'kaspa_devnet' | 'kaspa_simnet'
 
-// @TODO: Introduce KIP12 standard instead of pointing specifically to Kasware
-// export type KIP12RequestFn = (args: { method: string; params?: unknown }) => Promise<unknown>
+export type KIP12Method =
+  | 'kaspa:connect'
+  | 'kaspa:disconnect'
+  | 'kaspa:send'
+  | 'kaspa:sign'
+  | 'kaspa:broadcast'
+  | 'kaspa:signPersonal'
+  | 'kaspa:sendTransaction'
+  | 'kaspa:signTransaction'
+  | 'kaspa:broadcastTransaction'
 
-export type KIP12Provider = {
-  address: string
-  // request: KIP12RequestFn
-  requestAccounts: () => Promise<string[]>
-  getNetwork: () => Promise<NetworkId>
-  signMessage: (message: string, type?: 'ecdsa' | 'schnorr') => Promise<string>
+export interface KIP12ProviderInfo {
+  id: string
+  name: string
+  icon: string
+  methods: readonly KIP12Method[]
 }
 
-export type KaspaWallet = KIP12Provider
+export interface KIP12Provider {
+  request(method: KIP12Method, args: unknown[]): Promise<unknown>
+  connect(): Promise<void>
+  disconnect(): Promise<void>
+}
+
+export async function getKaspaProvider(): Promise<{
+  info: KIP12ProviderInfo
+  provider: KIP12Provider
+}> {
+  const w = window as any
+  return new Promise((resolve, reject) => {
+    const timeout = w.setTimeout(() => {
+      w.removeEventListener('kaspa:provider', onProvider)
+      reject(new Error('No KIP-12 provider found'))
+    }, 1500)
+
+    const onProvider = (event: { detail: { info: KIP12ProviderInfo; provider: KIP12Provider } }) => {
+      w.clearTimeout(timeout)
+      w.removeEventListener('kaspa:provider', onProvider)
+      resolve(event.detail)
+    }
+
+    w.addEventListener('kaspa:provider', onProvider, { once: true })
+    w.dispatchEvent(new w.CustomEvent('kaspa:requestProvider'))
+  })
+}
 
 /**
- * KIP-4361 message fields
+ * Kaspa message fields
  */
 export type SiwkMessage = {
   /**
@@ -29,7 +62,7 @@ export type SiwkMessage = {
    */
   address: Address
   /**
-   * The [EIP-155](https://eips.ethereum.org/EIPS/eip-155) Network ID to which the session is bound,
+   * The Kaspa network ID to which the session is bound.
    */
   networkId: NetworkId
   /**

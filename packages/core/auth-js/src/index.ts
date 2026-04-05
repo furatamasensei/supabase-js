@@ -11,3 +11,5 @@ export {
   internals as lockInternals,
   processLock,
 } from './lib/locks'
+export { getKaspaProvider } from './lib/web3/kaspa'
+export type { KIP12Method, KIP12Provider, KIP12ProviderInfo } from './lib/web3/kaspa'
