@@ -150,7 +150,7 @@ describe('kaspa', () => {
       }
 
       expect(() => createSiwkMessage(invalidVersion)).toThrow(
-        '@supabase/auth-js: Invalid SIWE message field "version". Version must be \'1\'. Provided value: 2'
+        '@supabase/auth-js: Invalid SIWK message field "version". Version must be \'1\'. Provided value: 2'
       )
     })
 
@@ -172,7 +172,7 @@ describe('kaspa', () => {
       }
 
       expect(() => createSiwkMessage(invalidResources)).toThrow(
-        '@supabase/auth-js: Invalid SIWE message field "resources". Every resource must be a valid string. Provided value: '
+        '@supabase/auth-js: Invalid SIWK message field "resources". Every resource must be a valid string. Provided value: '
       )
     })
 
@@ -183,7 +183,7 @@ describe('kaspa', () => {
       }
 
       expect(() => createSiwkMessage(invalidResources)).toThrow(
-        '@supabase/auth-js: Invalid SIWE message field "resources". Every resource must be a valid string. Provided value: null'
+        '@supabase/auth-js: Invalid SIWK message field "resources". Every resource must be a valid string. Provided value: null'
       )
     })
 
@@ -259,7 +259,7 @@ describe('kaspa', () => {
     })
 
     afterEach(() => {
-      ;(global as any).window = originalWindow
+      ; (global as any).window = originalWindow
       jest.useRealTimers()
     })
 
@@ -316,7 +316,7 @@ describe('kaspa', () => {
         }
       })
 
-      ;(global as any).window = win
+        ; (global as any).window = win
 
       const result = await getKaspaProvider()
       expect(result.info).toEqual(mockInfo)
@@ -327,7 +327,7 @@ describe('kaspa', () => {
       jest.useFakeTimers()
 
       const { win } = makeMockWindow()
-      ;(global as any).window = win
+        ; (global as any).window = win
 
       const promise = getKaspaProvider()
       jest.advanceTimersByTime(1500)
