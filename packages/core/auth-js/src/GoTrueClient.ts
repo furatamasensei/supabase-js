@@ -75,6 +75,11 @@ import type {
   AuthMFAListFactorsResponse,
   AuthMFAUnenrollResponse,
   AuthMFAVerifyResponse,
+  AuthOAuthAuthorizationDetailsResponse,
+  AuthOAuthConsentResponse,
+  AuthOAuthGrantsResponse,
+  AuthOAuthRevokeGrantResponse,
+  AuthOAuthServerApi,
   AuthOtpResponse,
   AuthResponse,
   AuthResponsePassword,
@@ -109,11 +114,6 @@ import type {
   MFAVerifyWebauthnParamFields,
   MFAVerifyWebauthnParams,
   OAuthResponse,
-  AuthOAuthServerApi,
-  AuthOAuthAuthorizationDetailsResponse,
-  AuthOAuthConsentResponse,
-  AuthOAuthGrantsResponse,
-  AuthOAuthRevokeGrantResponse,
   Prettify,
   Provider,
   ResendParams,
@@ -151,8 +151,7 @@ import {
   createSiwkMessage,
   getAddress as getKaspaAddress,
   getKaspaProvider,
-  NetworkId,
-  SiwkMessage,
+  SiwkMessage
 } from './lib/web3/kaspa'
 import {
   deserializeCredentialCreationOptions,
@@ -1368,17 +1367,17 @@ export default class GoTrueClient {
   /**
    * Signs in a user by verifying a message signed by the user's private key.
    * Supports Ethereum (via Sign-In-With-Ethereum), Solana (Sign-In-With-Solana), Kaspa (Sign-In-With-Kaspa) standards,
-   * which derive from the EIP-4361 standard
+   * all of which derive from the EIP-4361 standard
    * With slight variation on Solana's side.
    * @reference https://eips.ethereum.org/EIPS/eip-4361
    *
    * @category Auth
    *
    * @remarks
-   * - Uses a Web3 (Ethereum, Solana) wallet to sign a user in.
+   * - Uses a Web3 (Ethereum, Solana, Kaspa) wallet to sign a user in.
    * - Read up on the [potential for abuse](/docs/guides/auth/auth-web3#potential-for-abuse) before using it.
    *
-   * @example Sign in with Solana or Ethereum (Window API)
+   * @example Sign in with Solana, Ethereum or Kaspa (Window API)
    * ```js
    *   // uses window.ethereum for the wallet
    *   const { data, error } = await supabase.auth.signInWithWeb3({
@@ -1389,6 +1388,12 @@ export default class GoTrueClient {
    *   // uses window.solana for the wallet
    *   const { data, error } = await supabase.auth.signInWithWeb3({
    *     chain: 'solana',
+   *     statement: 'I accept the Terms of Service at https://example.com/tos'
+   *   })
+   *
+   *   // uses window.kaspa for the wallet
+   *   const { data, error } = await supabase.auth.signInWithWeb3({
+   *     chain: 'kaspa',
    *     statement: 'I accept the Terms of Service at https://example.com/tos'
    *   })
    * ```
@@ -1452,12 +1457,21 @@ export default class GoTrueClient {
    *   )
    * }
    * ```
+   * 
+   * @example Sign in with Kaspa (Message and Signature)
+   * ```js
+   *   const { data, error } = await supabase.auth.signInWithWeb3({
+   *     chain: 'kaspa',
+   *     message: '<sign in with kaspa message>',
+   *     signature: '<hex of the kaspa signature over the message>',
+   *   })
+   * ```
    */
   async signInWithWeb3(credentials: Web3Credentials): Promise<
     | {
-        data: { session: Session; user: User }
-        error: null
-      }
+      data: { session: Session; user: User }
+      error: null
+    }
     | { data: { session: null; user: null }; error: AuthError }
   > {
     const { chain } = credentials
@@ -1736,9 +1750,9 @@ export default class GoTrueClient {
             : []),
           ...(options?.signInWithSolana?.resources?.length
             ? [
-                'Resources',
-                ...options.signInWithSolana.resources.map((resource) => `- ${resource}`),
-              ]
+              'Resources',
+              ...options.signInWithSolana.resources.map((resource) => `- ${resource}`),
+            ]
             : []),
         ].join('\n')
 
@@ -1909,9 +1923,9 @@ export default class GoTrueClient {
 
   private async _exchangeCodeForSession(authCode: string): Promise<
     | {
-        data: { session: Session; user: User; redirectType: string | null }
-        error: null
-      }
+      data: { session: Session; user: User; redirectType: string | null }
+      error: null
+    }
     | { data: { session: null; user: null; redirectType: null }; error: AuthError }
   > {
     const storageItem = await getItemAsync(this.storage, `${this.storageKey}-code-verifier`)
@@ -2815,23 +2829,23 @@ export default class GoTrueClient {
     fn: (
       result:
         | {
-            data: {
-              session: Session
-            }
-            error: null
+          data: {
+            session: Session
           }
+          error: null
+        }
         | {
-            data: {
-              session: null
-            }
-            error: AuthError
+          data: {
+            session: null
           }
+          error: AuthError
+        }
         | {
-            data: {
-              session: null
-            }
-            error: null
+          data: {
+            session: null
           }
+          error: null
+        }
     ) => Promise<R>
   ): Promise<R> {
     this._debug('#_useSession', 'begin')
@@ -2853,23 +2867,23 @@ export default class GoTrueClient {
    */
   private async __loadSession(): Promise<
     | {
-        data: {
-          session: Session
-        }
-        error: null
+      data: {
+        session: Session
       }
+      error: null
+    }
     | {
-        data: {
-          session: null
-        }
-        error: AuthError
+      data: {
+        session: null
       }
+      error: AuthError
+    }
     | {
-        data: {
-          session: null
-        }
-        error: null
+      data: {
+        session: null
       }
+      error: null
+    }
   > {
     this._debug('#__loadSession()', 'begin')
 
@@ -3648,9 +3662,9 @@ export default class GoTrueClient {
     callbackUrlType: string
   ): Promise<
     | {
-        data: { session: Session; redirectType: string | null }
-        error: null
-      }
+      data: { session: Session; redirectType: string | null }
+      error: null
+    }
     | { data: { session: null; redirectType: null }; error: AuthError }
   > {
     try {
@@ -4103,13 +4117,13 @@ export default class GoTrueClient {
     this._debug('#onAuthStateChange()', 'registered callback with id', id)
 
     this.stateChangeEmitters.set(id, subscription)
-    ;(async () => {
-      await this.initializePromise
+      ; (async () => {
+        await this.initializePromise
 
-      await this._acquireLock(this.lockAcquireTimeout, async () => {
-        this._emitInitialSession(id)
-      })
-    })()
+        await this._acquireLock(this.lockAcquireTimeout, async () => {
+          this._emitInitialSession(id)
+        })
+      })()
 
     return { data: { subscription } }
   }
@@ -4208,9 +4222,9 @@ export default class GoTrueClient {
     } = {}
   ): Promise<
     | {
-        data: {}
-        error: null
-      }
+      data: {}
+      error: null
+    }
     | { data: null; error: AuthError }
   > {
     let codeChallenge: string | null = null
@@ -4286,11 +4300,11 @@ export default class GoTrueClient {
    */
   async getUserIdentities(): Promise<
     | {
-        data: {
-          identities: UserIdentity[]
-        }
-        error: null
+      data: {
+        identities: UserIdentity[]
       }
+      error: null
+    }
     | { data: null; error: AuthError }
   > {
     try {
@@ -4465,9 +4479,9 @@ export default class GoTrueClient {
    */
   async unlinkIdentity(identity: UserIdentity): Promise<
     | {
-        data: {}
-        error: null
-      }
+      data: {}
+      error: null
+    }
     | { data: null; error: AuthError }
   > {
     try {
@@ -5293,14 +5307,14 @@ export default class GoTrueClient {
             | Exclude<MFAVerifyParams, MFAVerifyWebauthnParams>
             /** Exclude out the webauthn params from here because we're going to need to serialize them in the response */
             | Prettify<
-                StrictOmit<MFAVerifyWebauthnParams, 'webauthn'> & {
-                  webauthn: Prettify<
-                    StrictOmit<MFAVerifyWebauthnParamFields['webauthn'], 'credential_response'> & {
-                      credential_response: PublicKeyCredentialJSON
-                    }
-                  >
-                }
-              >,
+              StrictOmit<MFAVerifyWebauthnParams, 'webauthn'> & {
+                webauthn: Prettify<
+                  StrictOmit<MFAVerifyWebauthnParamFields['webauthn'], 'credential_response'> & {
+                    credential_response: PublicKeyCredentialJSON
+                  }
+                >
+              }
+            >,
             /*  Exclude challengeId because the backend expects snake_case, and exclude factorId since it's passed in the path params */
             'challengeId' | 'factorId'
           > & {
@@ -5309,18 +5323,18 @@ export default class GoTrueClient {
             challenge_id: params.challengeId,
             ...('webauthn' in params
               ? {
-                  webauthn: {
-                    ...params.webauthn,
-                    credential_response:
-                      params.webauthn.type === 'create'
-                        ? serializeCredentialCreationResponse(
-                            params.webauthn.credential_response as RegistrationCredential
-                          )
-                        : serializeCredentialRequestResponse(
-                            params.webauthn.credential_response as AuthenticationCredential
-                          ),
-                  },
-                }
+                webauthn: {
+                  ...params.webauthn,
+                  credential_response:
+                    params.webauthn.type === 'create'
+                      ? serializeCredentialCreationResponse(
+                        params.webauthn.credential_response as RegistrationCredential
+                      )
+                      : serializeCredentialRequestResponse(
+                        params.webauthn.credential_response as AuthenticationCredential
+                      ),
+                },
+              }
               : { code: params.code }),
           }
 
@@ -5491,7 +5505,7 @@ export default class GoTrueClient {
     for (const factor of user?.factors ?? []) {
       data.all.push(factor)
       if (factor.status === 'verified') {
-        ;(data[factor.factor_type] as (typeof factor)[]).push(factor)
+        ; (data[factor.factor_type] as (typeof factor)[]).push(factor)
       }
     }
 
@@ -5927,9 +5941,9 @@ export default class GoTrueClient {
     } = {}
   ): Promise<
     | {
-        data: { claims: JwtPayload; header: JwtHeader; signature: Uint8Array }
-        error: null
-      }
+      data: { claims: JwtPayload; header: JwtHeader; signature: Uint8Array }
+      error: null
+    }
     | { data: null; error: AuthError }
     | { data: null; error: null }
   > {
@@ -5957,9 +5971,9 @@ export default class GoTrueClient {
 
       const signingKey =
         !header.alg ||
-        header.alg.startsWith('HS') ||
-        !header.kid ||
-        !('crypto' in globalThis && 'subtle' in globalThis.crypto)
+          header.alg.startsWith('HS') ||
+          !header.kid ||
+          !('crypto' in globalThis && 'subtle' in globalThis.crypto)
           ? null
           : await this.fetchJwk(header.kid, options?.keys ? { keys: options.keys } : options?.jwks)
 
