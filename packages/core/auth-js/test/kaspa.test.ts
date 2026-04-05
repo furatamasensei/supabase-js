@@ -9,30 +9,27 @@ import {
 
 describe('kaspa', () => {
   describe('getAddress', () => {
-    test('should return lowercase address for valid Kaspa address', () => {
-      const validAddresses = [
-        'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn',
-        'kaspatest:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp',
-        'kaspadev:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp',
-        'kaspasim:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp',
-      ]
-
-      validAddresses.forEach((address) => {
-        const result = getAddress(address)
-        expect(result).toBe(address.toLowerCase())
-        expect(result).toMatch(/^0x[a-f0-9]{40}$/)
-      })
+    test('should return address as-is for valid Kaspa addresses on all networks', () => {
+      expect(getAddress('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')).toBe(
+        'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn'
+      )
+      expect(getAddress('kaspatest:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp')).toBe(
+        'kaspatest:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp'
+      )
+      expect(getAddress('kaspadev:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp')).toBe(
+        'kaspadev:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp'
+      )
+      expect(getAddress('kaspasim:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp')).toBe(
+        'kaspasim:qrzq2766zyqqpnlsmnwflm7kzgzz5d3yut7096kxpyqcg566t6836zjwcx4lp'
+      )
     })
 
-    test('should throw error for invalid address format', () => {
+    test('should throw for addresses missing a valid network prefix', () => {
       const invalidAddresses = [
-        'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazu', // too short
-        'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn7hahaha', // too long
-        'qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn7', // missing prefix
-        'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn7G', // invalid character
-        'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn7!', // invalid character
+        'qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn', // missing prefix
         '', // empty string
         'not-an-address', // random string
+        'bitcoin:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazu', // wrong chain prefix
       ]
 
       invalidAddresses.forEach((address) => {
@@ -42,16 +39,9 @@ describe('kaspa', () => {
       })
     })
 
-    test('should handle edge cases', () => {
-      // Valid address with all zeros
-      expect(
-        getAddress('kaspa:0000000000000000000000000000000000000000000000000000000000000000')
-      ).toBe('kaspa:0000000000000000000000000000000000000000000000000000000000000000')
-
-      // Valid address with all f's
-      expect(
-        getAddress('kaspa:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
-      ).toBe('kaspa:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+    test('should preserve casing of the address as-is', () => {
+      const mixed = 'kaspa:QQK948C2DY6CP0VDG7FQX9XTTC47Q4QDAZUNHMFV8U24V77UVMXHYCC2UJ3YN'
+      expect(getAddress(mixed)).toBe(mixed)
     })
   })
 
@@ -220,13 +210,13 @@ describe('kaspa', () => {
       expect(lines[0]).toBe(
         'https://kaspa.example.com wants you to sign in with your Kaspa account:'
       )
-      expect(lines[1]).toBe('0x742d35cc6634c0532925a3b8d4c9db96c4b4d8b6')
+      expect(lines[1]).toBe('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')
       expect(lines[2]).toBe('')
       expect(lines[3]).toBe('Sign in to access your account')
       expect(lines[4]).toBe('')
       expect(lines[5]).toBe('URI: https://kaspa.example.com/auth')
       expect(lines[6]).toBe('Version: 1')
-      expect(lines[7]).toBe('Network ID: kaspa_mainnet37')
+      expect(lines[7]).toBe('Network ID: kaspa_mainnet')
       expect(lines[8]).toBe('Nonce: abcdef1234567890')
       expect(lines[9]).toMatch(/^Issued At: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
       expect(lines[10]).toBe('Expiration Time: 2024-12-31T23:59:59.000Z')
