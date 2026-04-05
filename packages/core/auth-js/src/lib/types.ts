@@ -1,7 +1,7 @@
 import { AuthError } from './errors'
 import { Fetch } from './fetch'
 import { EIP1193Provider, EthereumSignInInput, Hex } from './web3/ethereum'
-import { KaspaSignInInput, KIP1193Provider } from './web3/kaspa'
+import { KaspaSignInInput, KIP12Provider } from './web3/kaspa'
 import type { SolanaSignInInput, SolanaSignInOutput } from './web3/solana'
 import {
   ServerCredentialCreationOptions,
@@ -203,13 +203,13 @@ export type StrictOmit<T, K extends keyof T> = Omit<T, K>
  */
 export type RequestResult<T, ErrorType extends Error = AuthError> =
   | {
-      data: T
-      error: null
-    }
+    data: T
+    error: null
+  }
   | {
-      data: null
-      error: Error extends AuthError ? AuthError : ErrorType
-    }
+    data: null
+    error: Error extends AuthError ? AuthError : ErrorType
+  }
 
 /**
  * similar to RequestResult except it allows you to destructure the possible shape of the success response
@@ -218,9 +218,9 @@ export type RequestResult<T, ErrorType extends Error = AuthError> =
 export type RequestResultSafeDestructure<T> =
   | { data: T; error: null }
   | {
-      data: T extends object ? { [K in keyof T]: null } : null
-      error: AuthError
-    }
+    data: T extends object ? { [K in keyof T]: null } : null
+    error: AuthError
+  }
 
 export type AuthResponse = RequestResultSafeDestructure<{
   user: User | null
@@ -257,19 +257,19 @@ export type AuthTokenResponsePassword = RequestResultSafeDestructure<{
 
 export type OAuthResponse =
   | {
-      data: {
-        provider: Provider
-        url: string
-      }
-      error: null
+    data: {
+      provider: Provider
+      url: string
     }
+    error: null
+  }
   | {
-      data: {
-        provider: Provider
-        url: null
-      }
-      error: AuthError
+    data: {
+      provider: Provider
+      url: null
     }
+    error: AuthError
+  }
 
 export type SSOResponse = RequestResult<{
   /**
@@ -633,41 +633,41 @@ export type SignInWithPasswordCredentials = PasswordCredentialsBase & {
 
 export type SignInWithPasswordlessCredentials =
   | {
-      /** The user's email address. */
-      email: string
-      options?: {
-        /** The redirect url embedded in the email link */
-        emailRedirectTo?: string
-        /** If set to false, this method will not create a new user. Defaults to true. */
-        shouldCreateUser?: boolean
-        /**
-         * A custom data object to store the user's metadata. This maps to the `auth.users.raw_user_meta_data` column.
-         *
-         * The `data` should be a JSON object that includes user-specific info, such as their first and last name.
-         */
-        data?: object
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-      }
+    /** The user's email address. */
+    email: string
+    options?: {
+      /** The redirect url embedded in the email link */
+      emailRedirectTo?: string
+      /** If set to false, this method will not create a new user. Defaults to true. */
+      shouldCreateUser?: boolean
+      /**
+       * A custom data object to store the user's metadata. This maps to the `auth.users.raw_user_meta_data` column.
+       *
+       * The `data` should be a JSON object that includes user-specific info, such as their first and last name.
+       */
+      data?: object
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
     }
+  }
   | {
-      /** The user's phone number. */
-      phone: string
-      options?: {
-        /** If set to false, this method will not create a new user. Defaults to true. */
-        shouldCreateUser?: boolean
-        /**
-         * A custom data object to store the user's metadata. This maps to the `auth.users.raw_user_meta_data` column.
-         *
-         * The `data` should be a JSON object that includes user-specific info, such as their first and last name.
-         */
-        data?: object
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-        /** Messaging channel to use (e.g. whatsapp or sms) */
-        channel?: 'sms' | 'whatsapp'
-      }
+    /** The user's phone number. */
+    phone: string
+    options?: {
+      /** If set to false, this method will not create a new user. Defaults to true. */
+      shouldCreateUser?: boolean
+      /**
+       * A custom data object to store the user's metadata. This maps to the `auth.users.raw_user_meta_data` column.
+       *
+       * The `data` should be a JSON object that includes user-specific info, such as their first and last name.
+       */
+      data?: object
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
+      /** Messaging channel to use (e.g. whatsapp or sms) */
+      channel?: 'sms' | 'whatsapp'
     }
+  }
 
 export type AuthFlowType = 'implicit' | 'pkce'
 export type SignInWithOAuthCredentials = {
@@ -711,117 +711,117 @@ export type SolanaWallet = {
 
 export type SolanaWeb3Credentials =
   | {
-      chain: 'solana'
+    chain: 'solana'
 
-      /** Wallet interface to use. If not specified will default to `window.solana`. */
-      wallet?: SolanaWallet
+    /** Wallet interface to use. If not specified will default to `window.solana`. */
+    wallet?: SolanaWallet
 
-      /** Optional statement to include in the Sign in with Solana message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
-      statement?: string
+    /** Optional statement to include in the Sign in with Solana message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
+    statement?: string
 
-      options?: {
-        /** URL to use with the wallet interface. Some wallets do not allow signing a message for URLs different from the current page. */
-        url?: string
+    options?: {
+      /** URL to use with the wallet interface. Some wallets do not allow signing a message for URLs different from the current page. */
+      url?: string
 
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
 
-        signInWithSolana?: Partial<
-          Omit<SolanaSignInInput, 'version' | 'chain' | 'domain' | 'uri' | 'statement'>
-        >
-      }
+      signInWithSolana?: Partial<
+        Omit<SolanaSignInInput, 'version' | 'chain' | 'domain' | 'uri' | 'statement'>
+      >
     }
+  }
   | {
-      chain: 'solana'
+    chain: 'solana'
 
-      /** Sign in with Solana compatible message. Must include `Issued At`, `URI` and `Version`. */
-      message: string
+    /** Sign in with Solana compatible message. Must include `Issued At`, `URI` and `Version`. */
+    message: string
 
-      /** Ed25519 signature of the message. */
-      signature: Uint8Array
+    /** Ed25519 signature of the message. */
+    signature: Uint8Array
 
-      options?: {
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-      }
+    options?: {
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
     }
+  }
 
 export type EthereumWallet = EIP1193Provider
 
 export type EthereumWeb3Credentials =
   | {
-      chain: 'ethereum'
+    chain: 'ethereum'
 
-      /** Wallet interface to use. If not specified will default to `window.ethereum`. */
-      wallet?: EthereumWallet
+    /** Wallet interface to use. If not specified will default to `window.ethereum`. */
+    wallet?: EthereumWallet
 
-      /** Optional statement to include in the Sign in with Ethereum message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
-      statement?: string
+    /** Optional statement to include in the Sign in with Ethereum message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
+    statement?: string
 
-      options?: {
-        /** URL to use with the wallet interface. Some wallets do not allow signing a message for URLs different from the current page. */
-        url?: string
+    options?: {
+      /** URL to use with the wallet interface. Some wallets do not allow signing a message for URLs different from the current page. */
+      url?: string
 
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
 
-        signInWithEthereum?: Partial<
-          Omit<EthereumSignInInput, 'version' | 'domain' | 'uri' | 'statement'>
-        >
-      }
+      signInWithEthereum?: Partial<
+        Omit<EthereumSignInInput, 'version' | 'domain' | 'uri' | 'statement'>
+      >
     }
+  }
   | {
-      chain: 'ethereum'
+    chain: 'ethereum'
 
-      /** Sign in with Ethereum compatible message. Must include `Issued At`, `URI` and `Version`. */
-      message: string
+    /** Sign in with Ethereum compatible message. Must include `Issued At`, `URI` and `Version`. */
+    message: string
 
-      /** Ethereum curve (secp256k1) signature of the message. */
-      signature: Hex
+    /** Ethereum curve (secp256k1) signature of the message. */
+    signature: Hex
 
-      options?: {
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-      }
+    options?: {
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
     }
+  }
 
-export type KaspaWallet = KIP1193Provider
+export type KaspaWallet = KIP12Provider
 
 export type KaspaWeb3Credentials =
   | {
-      chain: 'kaspa'
+    chain: 'kaspa'
 
-      /** Wallet interface to use. If not specified will default to `window.kasware`. */
-      wallet?: KaspaWallet
+    /** Wallet interface to use. If not specified will default to `window.kasware`. */
+    wallet?: KaspaWallet
 
-      /** Optional statement to include in the Sign in with Kaspa message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
-      statement?: string
+    /** Optional statement to include in the Sign in with Kaspa message. Must not include new line characters. Most wallets like Phantom **require specifying a statement!** */
+    statement?: string
 
-      options?: {
-        /** URL to use with the wallet interface. Some wallets do not allow signing a message for URLs different from the current page. */
-        url?: string
+    options?: {
+      /** URL to use with the wallet interface. Some wallets do not allow signing a message for URLs different from the current page. */
+      url?: string
 
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken: string
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken: string
 
-        signInWithKaspa?: Partial<
-          Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement'>
-        >
-      }
+      signInWithKaspa?: Partial<
+        Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement'>
+      >
     }
+  }
   | {
-      chain: 'kaspa'
+    chain: 'kaspa'
 
-      /** Sign in with Kaspa compatible message. Must include `Issued At`, `URI` and `Version`. */
-      message: string
+    /** Sign in with Kaspa compatible message. Must include `Issued At`, `URI` and `Version`. */
+    message: string
 
-      /** Kaspa curve (secp256k1) signature of the message. */
-      signature: Hex
+    /** Kaspa curve (secp256k1) signature of the message. */
+    signature: Hex
 
-      options?: {
-        captchaToken?: string
-      }
+    options?: {
+      captchaToken?: string
     }
+  }
 
 export type Web3Credentials = SolanaWeb3Credentials | EthereumWeb3Credentials | KaspaWeb3Credentials
 
@@ -877,59 +877,59 @@ export type EmailOtpType = 'signup' | 'invite' | 'magiclink' | 'recovery' | 'ema
 
 export type ResendParams =
   | {
-      type: Extract<EmailOtpType, 'signup' | 'email_change'>
-      email: string
-      options?: {
-        /** A URL to send the user to after they have signed-in. */
-        emailRedirectTo?: string
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-      }
+    type: Extract<EmailOtpType, 'signup' | 'email_change'>
+    email: string
+    options?: {
+      /** A URL to send the user to after they have signed-in. */
+      emailRedirectTo?: string
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
     }
+  }
   | {
-      type: Extract<MobileOtpType, 'sms' | 'phone_change'>
-      phone: string
-      options?: {
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-      }
+    type: Extract<MobileOtpType, 'sms' | 'phone_change'>
+    phone: string
+    options?: {
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
     }
+  }
 
 export type SignInWithSSO =
   | {
-      /** UUID of the SSO provider to invoke single-sign on to. */
-      providerId: string
+    /** UUID of the SSO provider to invoke single-sign on to. */
+    providerId: string
 
-      options?: {
-        /** A URL to send the user to after they have signed-in. */
-        redirectTo?: string
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-        /**
-         * If set to true, the redirect will not happen on the client side.
-         * This parameter is used when you wish to handle the redirect yourself.
-         * Defaults to false.
-         */
-        skipBrowserRedirect?: boolean
-      }
+    options?: {
+      /** A URL to send the user to after they have signed-in. */
+      redirectTo?: string
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
+      /**
+       * If set to true, the redirect will not happen on the client side.
+       * This parameter is used when you wish to handle the redirect yourself.
+       * Defaults to false.
+       */
+      skipBrowserRedirect?: boolean
     }
+  }
   | {
-      /** Domain name of the organization for which to invoke single-sign on. */
-      domain: string
+    /** Domain name of the organization for which to invoke single-sign on. */
+    domain: string
 
-      options?: {
-        /** A URL to send the user to after they have signed-in. */
-        redirectTo?: string
-        /** Verification token received when the user completes the captcha on the site. */
-        captchaToken?: string
-        /**
-         * If set to true, the redirect will not happen on the client side.
-         * This parameter is used when you wish to handle the redirect yourself.
-         * Defaults to false.
-         */
-        skipBrowserRedirect?: boolean
-      }
+    options?: {
+      /** A URL to send the user to after they have signed-in. */
+      redirectTo?: string
+      /** Verification token received when the user completes the captcha on the site. */
+      captchaToken?: string
+      /**
+       * If set to true, the redirect will not happen on the client side.
+       * This parameter is used when you wish to handle the redirect yourself.
+       * Defaults to false.
+       */
+      skipBrowserRedirect?: boolean
     }
+  }
 
 export type GenerateSignupLinkParams = {
   type: 'signup'
@@ -1194,14 +1194,14 @@ export type AuthMFAChallengePhoneResponse = RequestResult<
 
 type AuthMFAChallengeWebauthnResponseFields = {
   webauthn:
-    | {
-        type: 'create'
-        credential_options: { publicKey: PublicKeyCredentialCreationOptionsFuture }
-      }
-    | {
-        type: 'request'
-        credential_options: { publicKey: PublicKeyCredentialRequestOptionsFuture }
-      }
+  | {
+    type: 'create'
+    credential_options: { publicKey: PublicKeyCredentialCreationOptionsFuture }
+  }
+  | {
+    type: 'request'
+    credential_options: { publicKey: PublicKeyCredentialRequestOptionsFuture }
+  }
 }
 
 /**
@@ -1215,14 +1215,14 @@ export type AuthMFAChallengeWebauthnResponse = RequestResult<
 
 type AuthMFAChallengeWebauthnResponseFieldsJSON = {
   webauthn:
-    | {
-        type: 'create'
-        credential_options: { publicKey: ServerCredentialCreationOptions }
-      }
-    | {
-        type: 'request'
-        credential_options: { publicKey: ServerCredentialRequestOptions }
-      }
+  | {
+    type: 'create'
+    credential_options: { publicKey: ServerCredentialCreationOptions }
+  }
+  | {
+    type: 'request'
+    credential_options: { publicKey: ServerCredentialRequestOptions }
+  }
 }
 
 /**
@@ -1815,8 +1815,8 @@ type MaybePromisify<T> = T | Promise<T>
 
 type PromisifyMethods<T> = {
   [K in keyof T]: T[K] extends AnyFunction
-    ? (...args: Parameters<T[K]>) => MaybePromisify<ReturnType<T[K]>>
-    : T[K]
+  ? (...args: Parameters<T[K]>) => MaybePromisify<ReturnType<T[K]>>
+  : T[K]
 }
 
 export type SupportedStorage = PromisifyMethods<
@@ -2138,13 +2138,13 @@ export type OAuthClientResponse = RequestResult<OAuthClient>
  */
 export type OAuthClientListResponse =
   | {
-      data: { clients: OAuthClient[]; aud: string } & Pagination
-      error: null
-    }
+    data: { clients: OAuthClient[]; aud: string } & Pagination
+    error: null
+  }
   | {
-      data: { clients: [] }
-      error: AuthError
-    }
+    data: { clients: [] }
+    error: AuthError
+  }
 
 /**
  * Contains all OAuth client administration methods.
@@ -2399,13 +2399,13 @@ export type CustomProviderResponse = RequestResult<CustomOAuthProvider>
  */
 export type CustomProviderListResponse =
   | {
-      data: { providers: CustomOAuthProvider[] }
-      error: null
-    }
+    data: { providers: CustomOAuthProvider[] }
+    error: null
+  }
   | {
-      data: { providers: [] }
-      error: AuthError
-    }
+    data: { providers: [] }
+    error: AuthError
+  }
 
 /**
  * Contains all custom OIDC/OAuth provider administration methods.

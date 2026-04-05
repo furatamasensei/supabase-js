@@ -7,18 +7,18 @@ export type Address = MainnetAddress | TestnetAddress | DevnetAddress | SimnetAd
 
 export type NetworkId = 'kaspa_mainnet' | 'kaspa_testnet_10' | 'kaspa_devnet' | 'kaspa_simnet'
 
-// @TODO: Introduce KIP1193 standard instead of pointing specifically to Kasware
-// export type KIP1193RequestFn = (args: { method: string; params?: unknown }) => Promise<unknown>
+// @TODO: Introduce KIP12 standard instead of pointing specifically to Kasware
+// export type KIP12RequestFn = (args: { method: string; params?: unknown }) => Promise<unknown>
 
-export type KIP1193Provider = {
+export type KIP12Provider = {
   address: string
-  // request: KIP1193RequestFn
+  // request: KIP12RequestFn
   requestAccounts: () => Promise<string[]>
   getNetwork: () => Promise<NetworkId>
   signMessage: (message: string, type?: 'ecdsa' | 'schnorr') => Promise<string>
 }
 
-export type KaspaWallet = KIP1193Provider
+export type KaspaWallet = KIP12Provider
 
 /**
  * KIP-4361 message fields
@@ -141,9 +141,8 @@ export function createSiwkMessage(parameters: SiwkMessage): string {
   const statement = parameters.statement ? `${parameters.statement}\n` : ''
   const prefix = `${origin} wants you to sign in with your Kaspa account:\n${address}\n\n${statement}`
 
-  let suffix = `URI: ${uri}\nVersion: ${version}\nNetwork ID: ${networkId}${
-    nonce ? `\nNonce: ${nonce}` : ''
-  }\nIssued At: ${issuedAt.toISOString()}`
+  let suffix = `URI: ${uri}\nVersion: ${version}\nNetwork ID: ${networkId}${nonce ? `\nNonce: ${nonce}` : ''
+    }\nIssued At: ${issuedAt.toISOString()}`
 
   if (expirationTime) suffix += `\nExpiration Time: ${expirationTime.toISOString()}`
   if (notBefore) suffix += `\nNot Before: ${notBefore.toISOString()}`
