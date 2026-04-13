@@ -48,7 +48,7 @@ describe('kaspa', () => {
   describe('createSiwkMessage', () => {
     const baseMessage: SiwkMessage = {
       address: 'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn',
-      chainId: 'kaspa_mainnet',
+      chainId: 'mainnet',
       domain: 'example.com',
       uri: 'https://example.com',
       version: '1',
@@ -61,7 +61,7 @@ describe('kaspa', () => {
       expect(message).toContain('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')
       expect(message).toContain('URI: https://example.com')
       expect(message).toContain('Version: 1')
-      expect(message).toContain('Chain ID: kaspa_mainnet')
+      expect(message).toContain('Chain ID: mainnet')
       expect(message).toContain('Issued At:')
       expect(message).toMatch(/Nonce: [0-9a-f]{16}/)
     })
@@ -205,7 +205,7 @@ describe('kaspa', () => {
     test('should format message correctly with all optional fields', () => {
       const fullMessage: SiwkMessage = {
         address: 'kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn',
-        chainId: 'kaspa_mainnet',
+        chainId: 'mainnet',
         domain: 'kaspa.example.com',
         uri: 'https://kaspa.example.com/auth',
         version: '1',
@@ -231,7 +231,7 @@ describe('kaspa', () => {
       expect(lines[4]).toBe('')
       expect(lines[5]).toBe('URI: https://kaspa.example.com/auth')
       expect(lines[6]).toBe('Version: 1')
-      expect(lines[7]).toBe('Chain ID: kaspa_mainnet')
+      expect(lines[7]).toBe('Chain ID: mainnet')
       expect(lines[8]).toBe('Nonce: abcdef1234567890')
       expect(lines[9]).toMatch(/^Issued At: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
       expect(lines[10]).toBe('Expiration Time: 2024-12-31T23:59:59.000Z')
@@ -308,6 +308,8 @@ describe('kaspa', () => {
         request: jest.fn(),
         connect: jest.fn(),
         disconnect: jest.fn(),
+        on: jest.fn(),
+        removeListener: jest.fn(),
       }
 
       const { listeners, win } = makeMockWindow((eventType) => {
