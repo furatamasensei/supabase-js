@@ -2699,7 +2699,7 @@ describe('Web3 Authentication', () => {
         options: {
           url: 'https://example.com',
           signInWithKaspa: {
-            chainId: 'kaspa_mainnet',
+            chainId: 'mainnet',
           },
         },
       })
