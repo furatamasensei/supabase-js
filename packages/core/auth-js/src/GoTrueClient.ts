@@ -1851,13 +1851,11 @@ export default class GoTrueClient {
 
       // kaspa:requestAccounts connects the site (prompts if needed) and returns
       // the list of accounts — mirrors eth_requestAccounts from EIP-1102.
-      const accounts = await resolvedWallet
-        .request('kaspa:requestAccounts', [])
-        .catch(() => {
-          throw new Error(
-            `@supabase/auth-js: Wallet method kaspa:requestAccounts is missing or failed.`
-          )
-        })
+      const accounts = await resolvedWallet.request('kaspa:requestAccounts', []).catch(() => {
+        throw new Error(
+          `@supabase/auth-js: Wallet method kaspa:requestAccounts is missing or failed.`
+        )
+      })
 
       if (!accounts.length) {
         throw new Error(
@@ -1873,9 +1871,7 @@ export default class GoTrueClient {
       let chainId = options?.signInWithKaspa?.chainId
       if (!chainId) {
         chainId = await resolvedWallet.request('kaspa:chainId', []).catch(() => {
-          throw new Error(
-            `@supabase/auth-js: Wallet method kaspa:chainId is missing or failed.`
-          )
+          throw new Error(`@supabase/auth-js: Wallet method kaspa:chainId is missing or failed.`)
         })
       }
 
