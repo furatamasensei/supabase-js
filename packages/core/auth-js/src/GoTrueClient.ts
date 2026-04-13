@@ -151,7 +151,7 @@ import {
   createSiwkMessage,
   getAddress as getKaspaAddress,
   getKaspaProvider,
-  SiwkMessage
+  SiwkMessage,
 } from './lib/web3/kaspa'
 import {
   deserializeCredentialCreationOptions,
@@ -1457,7 +1457,7 @@ export default class GoTrueClient {
    *   )
    * }
    * ```
-   * 
+   *
    * @example Sign in with Kaspa (Message and Signature)
    * ```js
    *   const { data, error } = await supabase.auth.signInWithWeb3({
@@ -1469,9 +1469,9 @@ export default class GoTrueClient {
    */
   async signInWithWeb3(credentials: Web3Credentials): Promise<
     | {
-      data: { session: Session; user: User }
-      error: null
-    }
+        data: { session: Session; user: User }
+        error: null
+      }
     | { data: { session: null; user: null }; error: AuthError }
   > {
     const { chain } = credentials
@@ -1750,9 +1750,9 @@ export default class GoTrueClient {
             : []),
           ...(options?.signInWithSolana?.resources?.length
             ? [
-              'Resources',
-              ...options.signInWithSolana.resources.map((resource) => `- ${resource}`),
-            ]
+                'Resources',
+                ...options.signInWithSolana.resources.map((resource) => `- ${resource}`),
+              ]
             : []),
         ].join('\n')
 
@@ -1929,9 +1929,9 @@ export default class GoTrueClient {
 
   private async _exchangeCodeForSession(authCode: string): Promise<
     | {
-      data: { session: Session; user: User; redirectType: string | null }
-      error: null
-    }
+        data: { session: Session; user: User; redirectType: string | null }
+        error: null
+      }
     | { data: { session: null; user: null; redirectType: null }; error: AuthError }
   > {
     const storageItem = await getItemAsync(this.storage, `${this.storageKey}-code-verifier`)
@@ -2835,23 +2835,23 @@ export default class GoTrueClient {
     fn: (
       result:
         | {
-          data: {
-            session: Session
+            data: {
+              session: Session
+            }
+            error: null
           }
-          error: null
-        }
         | {
-          data: {
-            session: null
+            data: {
+              session: null
+            }
+            error: AuthError
           }
-          error: AuthError
-        }
         | {
-          data: {
-            session: null
+            data: {
+              session: null
+            }
+            error: null
           }
-          error: null
-        }
     ) => Promise<R>
   ): Promise<R> {
     this._debug('#_useSession', 'begin')
@@ -2873,23 +2873,23 @@ export default class GoTrueClient {
    */
   private async __loadSession(): Promise<
     | {
-      data: {
-        session: Session
+        data: {
+          session: Session
+        }
+        error: null
       }
-      error: null
-    }
     | {
-      data: {
-        session: null
+        data: {
+          session: null
+        }
+        error: AuthError
       }
-      error: AuthError
-    }
     | {
-      data: {
-        session: null
+        data: {
+          session: null
+        }
+        error: null
       }
-      error: null
-    }
   > {
     this._debug('#__loadSession()', 'begin')
 
@@ -3668,9 +3668,9 @@ export default class GoTrueClient {
     callbackUrlType: string
   ): Promise<
     | {
-      data: { session: Session; redirectType: string | null }
-      error: null
-    }
+        data: { session: Session; redirectType: string | null }
+        error: null
+      }
     | { data: { session: null; redirectType: null }; error: AuthError }
   > {
     try {
@@ -4123,13 +4123,13 @@ export default class GoTrueClient {
     this._debug('#onAuthStateChange()', 'registered callback with id', id)
 
     this.stateChangeEmitters.set(id, subscription)
-      ; (async () => {
-        await this.initializePromise
+    ;(async () => {
+      await this.initializePromise
 
-        await this._acquireLock(this.lockAcquireTimeout, async () => {
-          this._emitInitialSession(id)
-        })
-      })()
+      await this._acquireLock(this.lockAcquireTimeout, async () => {
+        this._emitInitialSession(id)
+      })
+    })()
 
     return { data: { subscription } }
   }
@@ -4228,9 +4228,9 @@ export default class GoTrueClient {
     } = {}
   ): Promise<
     | {
-      data: {}
-      error: null
-    }
+        data: {}
+        error: null
+      }
     | { data: null; error: AuthError }
   > {
     let codeChallenge: string | null = null
@@ -4306,11 +4306,11 @@ export default class GoTrueClient {
    */
   async getUserIdentities(): Promise<
     | {
-      data: {
-        identities: UserIdentity[]
+        data: {
+          identities: UserIdentity[]
+        }
+        error: null
       }
-      error: null
-    }
     | { data: null; error: AuthError }
   > {
     try {
@@ -4485,9 +4485,9 @@ export default class GoTrueClient {
    */
   async unlinkIdentity(identity: UserIdentity): Promise<
     | {
-      data: {}
-      error: null
-    }
+        data: {}
+        error: null
+      }
     | { data: null; error: AuthError }
   > {
     try {
@@ -5313,14 +5313,14 @@ export default class GoTrueClient {
             | Exclude<MFAVerifyParams, MFAVerifyWebauthnParams>
             /** Exclude out the webauthn params from here because we're going to need to serialize them in the response */
             | Prettify<
-              StrictOmit<MFAVerifyWebauthnParams, 'webauthn'> & {
-                webauthn: Prettify<
-                  StrictOmit<MFAVerifyWebauthnParamFields['webauthn'], 'credential_response'> & {
-                    credential_response: PublicKeyCredentialJSON
-                  }
-                >
-              }
-            >,
+                StrictOmit<MFAVerifyWebauthnParams, 'webauthn'> & {
+                  webauthn: Prettify<
+                    StrictOmit<MFAVerifyWebauthnParamFields['webauthn'], 'credential_response'> & {
+                      credential_response: PublicKeyCredentialJSON
+                    }
+                  >
+                }
+              >,
             /*  Exclude challengeId because the backend expects snake_case, and exclude factorId since it's passed in the path params */
             'challengeId' | 'factorId'
           > & {
@@ -5329,18 +5329,18 @@ export default class GoTrueClient {
             challenge_id: params.challengeId,
             ...('webauthn' in params
               ? {
-                webauthn: {
-                  ...params.webauthn,
-                  credential_response:
-                    params.webauthn.type === 'create'
-                      ? serializeCredentialCreationResponse(
-                        params.webauthn.credential_response as RegistrationCredential
-                      )
-                      : serializeCredentialRequestResponse(
-                        params.webauthn.credential_response as AuthenticationCredential
-                      ),
-                },
-              }
+                  webauthn: {
+                    ...params.webauthn,
+                    credential_response:
+                      params.webauthn.type === 'create'
+                        ? serializeCredentialCreationResponse(
+                            params.webauthn.credential_response as RegistrationCredential
+                          )
+                        : serializeCredentialRequestResponse(
+                            params.webauthn.credential_response as AuthenticationCredential
+                          ),
+                  },
+                }
               : { code: params.code }),
           }
 
@@ -5511,7 +5511,7 @@ export default class GoTrueClient {
     for (const factor of user?.factors ?? []) {
       data.all.push(factor)
       if (factor.status === 'verified') {
-        ; (data[factor.factor_type] as (typeof factor)[]).push(factor)
+        ;(data[factor.factor_type] as (typeof factor)[]).push(factor)
       }
     }
 
@@ -5947,9 +5947,9 @@ export default class GoTrueClient {
     } = {}
   ): Promise<
     | {
-      data: { claims: JwtPayload; header: JwtHeader; signature: Uint8Array }
-      error: null
-    }
+        data: { claims: JwtPayload; header: JwtHeader; signature: Uint8Array }
+        error: null
+      }
     | { data: null; error: AuthError }
     | { data: null; error: null }
   > {
@@ -5977,9 +5977,9 @@ export default class GoTrueClient {
 
       const signingKey =
         !header.alg ||
-          header.alg.startsWith('HS') ||
-          !header.kid ||
-          !('crypto' in globalThis && 'subtle' in globalThis.crypto)
+        header.alg.startsWith('HS') ||
+        !header.kid ||
+        !('crypto' in globalThis && 'subtle' in globalThis.crypto)
           ? null
           : await this.fetchJwk(header.kid, options?.keys ? { keys: options.keys } : options?.jwks)
 

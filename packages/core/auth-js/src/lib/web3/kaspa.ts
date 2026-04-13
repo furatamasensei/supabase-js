@@ -42,7 +42,9 @@ export async function getKaspaProvider(): Promise<{
       reject(new Error('No KIP-12 provider found'))
     }, 1500)
 
-    const onProvider = (event: { detail: { info: KIP12ProviderInfo; provider: KIP12Provider } }) => {
+    const onProvider = (event: {
+      detail: { info: KIP12ProviderInfo; provider: KIP12Provider }
+    }) => {
       w.clearTimeout(timeout)
       w.removeEventListener('kaspa:provider', onProvider)
       resolve(event.detail)
