@@ -791,8 +791,8 @@ export type KaspaWeb3Credentials =
   | {
       chain: 'kaspa'
 
-      /** The user's Kaspa address. Required because KIP-12 providers do not expose a getAccounts method. */
-      address: string
+      /** The user's Kaspa address. If omitted, resolved automatically via `kaspa:requestAccounts`. */
+      address?: string
 
       /** Wallet interface to use. If not specified, will be auto-detected via the KIP-12 `kaspa:requestProvider` event. */
       wallet?: KaspaWallet
@@ -810,8 +810,8 @@ export type KaspaWeb3Credentials =
         signInWithKaspa?: Partial<
           Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement' | 'address'>
         > & {
-          /** The Kaspa chain ID. Required because KIP-12 providers do not expose a getNetwork method. */
-          chainId: NetworkId
+          /** The Kaspa network ID. If omitted, resolved automatically via `kaspa:chainId`. */
+          chainId?: NetworkId
         }
       }
     }

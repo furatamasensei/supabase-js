@@ -5,11 +5,13 @@ export type SimnetAddress = `kaspasim:${string}`
 
 export type Address = MainnetAddress | TestnetAddress | DevnetAddress | SimnetAddress
 
-export type NetworkId = 'kaspa_mainnet' | 'kaspa_testnet_10' | 'kaspa_devnet' | 'kaspa_simnet'
+export type NetworkId = 'mainnet' | 'testnet' | 'devnet' | 'simnet'
 
 export type KIP12Method =
   | 'kaspa:connect'
   | 'kaspa:disconnect'
+  | 'kaspa:requestAccounts'
+  | 'kaspa:chainId'
   | 'kaspa:send'
   | 'kaspa:sign'
   | 'kaspa:broadcast'
@@ -25,7 +27,23 @@ export interface KIP12ProviderInfo {
   methods: readonly KIP12Method[]
 }
 
-export interface KIP12Provider {
+/** Typed map of outbound events a KIP-12 provider can emit. */
+export type KIP12EventMap = {
+  /** Fired when the user switches networks inside the wallet. */
+  'kaspa:chainChanged': (payload: { type: 'kaspa:chainChanged'; networkId: NetworkId }) => void
+}
+
+export type KIP12Events = {
+  on<E extends keyof KIP12EventMap>(event: E, listener: KIP12EventMap[E]): void
+  removeListener<E extends keyof KIP12EventMap>(event: E, listener: KIP12EventMap[E]): void
+}
+
+export interface KIP12Provider extends KIP12Events {
+  /** Returns the connected account addresses. Prompts for connection if not yet connected.
+   *  Returns an empty array when the wallet is locked without prompting. */
+  request(method: 'kaspa:requestAccounts', args: []): Promise<string[]>
+  /** Returns the current network identifier (e.g. "mainnet", "testnet"). No approval popup. */
+  request(method: 'kaspa:chainId', args: []): Promise<NetworkId>
   request(method: KIP12Method, args: unknown[]): Promise<unknown>
   connect(): Promise<void>
   disconnect(): Promise<void>

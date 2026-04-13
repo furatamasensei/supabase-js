@@ -1849,16 +1849,35 @@ export default class GoTrueClient {
 
       const url = new URL(options?.url ?? window.location.href)
 
-      const address = getKaspaAddress(credentials.address)
+      // kaspa:requestAccounts connects the site (prompts if needed) and returns
+      // the list of accounts — mirrors eth_requestAccounts from EIP-1102.
+      const accounts = await resolvedWallet
+        .request('kaspa:requestAccounts', [])
+        .catch(() => {
+          throw new Error(
+            `@supabase/auth-js: Wallet method kaspa:requestAccounts is missing or failed.`
+          )
+        })
 
-      const chainId = options?.signInWithKaspa?.chainId
-      if (!chainId) {
+      if (!accounts.length) {
         throw new Error(
-          `@supabase/auth-js: chainId is required in options.signInWithKaspa when signing in with Kaspa. KIP-12 providers do not expose a getNetwork method.`
+          `@supabase/auth-js: kaspa:requestAccounts returned no accounts. The user may have rejected the connection or the wallet is locked.`
         )
       }
 
-      await resolvedWallet.connect()
+      // Use the caller-supplied address or fall back to the first returned account.
+      const address = getKaspaAddress(credentials.address ?? accounts[0])
+
+      // kaspa:chainId mirrors eth_chainId (EIP-695): read-only, no popup.
+      // Use the caller-supplied chainId or auto-fetch from the wallet.
+      let chainId = options?.signInWithKaspa?.chainId
+      if (!chainId) {
+        chainId = await resolvedWallet.request('kaspa:chainId', []).catch(() => {
+          throw new Error(
+            `@supabase/auth-js: Wallet method kaspa:chainId is missing or failed.`
+          )
+        })
+      }
 
       const siwkMessage: SiwkMessage = {
         domain: url.host,
