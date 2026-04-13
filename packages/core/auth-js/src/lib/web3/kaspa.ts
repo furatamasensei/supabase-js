@@ -182,11 +182,11 @@ export function createSiwkMessage(parameters: SiwkMessage): string {
   // Construct message
   const address = getAddress(parameters.address)
   const origin = scheme ? `${scheme}://${domain}` : domain
-  const statement = parameters.statement ? `${parameters.statement}\n` : ''
-  const prefix = `${origin} wants you to sign in with your Kaspa account:\n${address}\n\n${statement}`
+  const statement = parameters.statement ? `${parameters.statement.trim()}\n\n` : ''
+  const prefix = `${origin} wants you to sign in with your Kaspa address:\n${address}\n\n${statement}`
 
   const resolvedNonce = nonce ?? generateNonce()
-  let suffix = `URI: ${uri}\nVersion: ${version}\nNetwork ID: ${chainId}\nNonce: ${resolvedNonce}\nIssued At: ${issuedAt.toISOString()}`
+  let suffix = `URI: ${uri}\nVersion: ${version}\nChain ID: ${chainId}\nNonce: ${resolvedNonce}\nIssued At: ${issuedAt.toISOString()}`
 
   if (expirationTime) suffix += `\nExpiration Time: ${expirationTime.toISOString()}`
   if (notBefore) suffix += `\nNot Before: ${notBefore.toISOString()}`
@@ -203,5 +203,5 @@ export function createSiwkMessage(parameters: SiwkMessage): string {
     suffix += content
   }
 
-  return `${prefix}\n${suffix}`
+  return `${prefix}${suffix}`
 }
