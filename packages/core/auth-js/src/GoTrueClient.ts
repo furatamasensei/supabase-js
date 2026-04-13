@@ -25,12 +25,12 @@ import {
   isAuthSessionMissingError,
 } from './lib/errors'
 import {
-  Fetch,
   _request,
   _sessionResponse,
   _sessionResponsePassword,
   _ssoResponse,
   _userResponse,
+  Fetch,
 } from './lib/fetch'
 import {
   decodeJWT,
@@ -75,6 +75,11 @@ import type {
   AuthMFAListFactorsResponse,
   AuthMFAUnenrollResponse,
   AuthMFAVerifyResponse,
+  AuthOAuthAuthorizationDetailsResponse,
+  AuthOAuthConsentResponse,
+  AuthOAuthGrantsResponse,
+  AuthOAuthRevokeGrantResponse,
+  AuthOAuthServerApi,
   AuthOtpResponse,
   AuthResponse,
   AuthResponsePassword,
@@ -90,6 +95,8 @@ import type {
   JWK,
   JwtHeader,
   JwtPayload,
+  KaspaWallet,
+  KaspaWeb3Credentials,
   LockFunc,
   MFAChallengeAndVerifyParams,
   MFAChallengeParams,
@@ -107,11 +114,6 @@ import type {
   MFAVerifyWebauthnParamFields,
   MFAVerifyWebauthnParams,
   OAuthResponse,
-  AuthOAuthServerApi,
-  AuthOAuthAuthorizationDetailsResponse,
-  AuthOAuthConsentResponse,
-  AuthOAuthGrantsResponse,
-  AuthOAuthRevokeGrantResponse,
   Prettify,
   Provider,
   ResendParams,
@@ -145,6 +147,12 @@ import {
   SiweMessage,
   toHex,
 } from './lib/web3/ethereum'
+import {
+  createSiwkMessage,
+  getAddress as getKaspaAddress,
+  getKaspaProvider,
+  SiwkMessage,
+} from './lib/web3/kaspa'
 import {
   deserializeCredentialCreationOptions,
   deserializeCredentialRequestOptions,
@@ -1358,18 +1366,18 @@ export default class GoTrueClient {
 
   /**
    * Signs in a user by verifying a message signed by the user's private key.
-   * Supports Ethereum (via Sign-In-With-Ethereum) & Solana (Sign-In-With-Solana) standards,
-   * both of which derive from the EIP-4361 standard
+   * Supports Ethereum (via Sign-In-With-Ethereum), Solana (Sign-In-With-Solana), Kaspa (Sign-In-With-Kaspa) standards,
+   * all of which derive from the EIP-4361 standard
    * With slight variation on Solana's side.
    * @reference https://eips.ethereum.org/EIPS/eip-4361
    *
    * @category Auth
    *
    * @remarks
-   * - Uses a Web3 (Ethereum, Solana) wallet to sign a user in.
+   * - Uses a Web3 (Ethereum, Solana, Kaspa) wallet to sign a user in.
    * - Read up on the [potential for abuse](/docs/guides/auth/auth-web3#potential-for-abuse) before using it.
    *
-   * @example Sign in with Solana or Ethereum (Window API)
+   * @example Sign in with Solana, Ethereum or Kaspa (Window API)
    * ```js
    *   // uses window.ethereum for the wallet
    *   const { data, error } = await supabase.auth.signInWithWeb3({
@@ -1380,6 +1388,12 @@ export default class GoTrueClient {
    *   // uses window.solana for the wallet
    *   const { data, error } = await supabase.auth.signInWithWeb3({
    *     chain: 'solana',
+   *     statement: 'I accept the Terms of Service at https://example.com/tos'
+   *   })
+   *
+   *   // uses window.kaspa for the wallet
+   *   const { data, error } = await supabase.auth.signInWithWeb3({
+   *     chain: 'kaspa',
    *     statement: 'I accept the Terms of Service at https://example.com/tos'
    *   })
    * ```
@@ -1443,6 +1457,15 @@ export default class GoTrueClient {
    *   )
    * }
    * ```
+   *
+   * @example Sign in with Kaspa (Message and Signature)
+   * ```js
+   *   const { data, error } = await supabase.auth.signInWithWeb3({
+   *     chain: 'kaspa',
+   *     message: '<sign in with kaspa message>',
+   *     signature: '<hex of the kaspa signature over the message>',
+   *   })
+   * ```
    */
   async signInWithWeb3(credentials: Web3Credentials): Promise<
     | {
@@ -1458,6 +1481,8 @@ export default class GoTrueClient {
         return await this.signInWithEthereum(credentials)
       case 'solana':
         return await this.signInWithSolana(credentials)
+      case 'kaspa':
+        return await this.signInWithKaspa(credentials)
       default:
         throw new Error(`@supabase/auth-js: Unsupported chain "${chain}"`)
     }
@@ -1780,6 +1805,137 @@ export default class GoTrueClient {
     } catch (error) {
       if (isAuthError(error)) {
         return this._returnResult({ data: { user: null, session: null }, error })
+      }
+
+      throw error
+    }
+  }
+
+  private async signInWithKaspa(
+    credentials: KaspaWeb3Credentials
+  ): Promise<
+    | { data: { session: Session; user: User }; error: null }
+    | { data: { session: null; user: null }; error: AuthError }
+  > {
+    // TODO: flatten type
+    let message: string
+    let signature: string
+
+    if ('message' in credentials) {
+      message = credentials.message
+      signature = credentials.signature
+    } else {
+      const { wallet, statement, options } = credentials
+
+      let resolvedWallet: KaspaWallet
+
+      if (!isBrowser()) {
+        if (typeof wallet !== 'object' || !options?.url) {
+          throw new Error(
+            '@supabase/auth-js: Both wallet and url must be specified in non-browser environments.'
+          )
+        }
+        resolvedWallet = wallet
+      } else if (typeof wallet === 'object') {
+        resolvedWallet = wallet
+      } else {
+        const { provider } = await getKaspaProvider().catch(() => {
+          throw new Error(
+            `@supabase/auth-js: No KIP-12 Kaspa wallet detected. Make sure the user has a compatible wallet installed. Prefer passing the wallet interface directly to signInWithWeb3({ chain: 'kaspa', wallet: resolvedUserWallet }).`
+          )
+        })
+        resolvedWallet = provider
+      }
+
+      const url = new URL(options?.url ?? window.location.href)
+
+      // kaspa:requestAccounts connects the site (prompts if needed) and returns
+      // the list of accounts — mirrors eth_requestAccounts from EIP-1102.
+      const accounts = await resolvedWallet.request('kaspa:requestAccounts', []).catch(() => {
+        throw new Error(
+          `@supabase/auth-js: Wallet method kaspa:requestAccounts is missing or failed.`
+        )
+      })
+
+      if (!accounts.length) {
+        throw new Error(
+          `@supabase/auth-js: kaspa:requestAccounts returned no accounts. The user may have rejected the connection or the wallet is locked.`
+        )
+      }
+
+      // Use the caller-supplied address or fall back to the first returned account.
+      const address = getKaspaAddress(credentials.address ?? accounts[0])
+
+      // kaspa:chainId mirrors eth_chainId (EIP-695): read-only, no popup.
+      // Use the caller-supplied chainId or auto-fetch from the wallet.
+      let chainId = options?.signInWithKaspa?.chainId
+      if (!chainId) {
+        chainId = await resolvedWallet.request('kaspa:chainId', []).catch(() => {
+          throw new Error(`@supabase/auth-js: Wallet method kaspa:chainId is missing or failed.`)
+        })
+      }
+
+      const siwkMessage: SiwkMessage = {
+        domain: url.host,
+        address: address,
+        statement: statement,
+        uri: url.href,
+        version: '1',
+        chainId: chainId,
+        nonce: options?.signInWithKaspa?.nonce,
+        issuedAt: options?.signInWithKaspa?.issuedAt ?? new Date(),
+        expirationTime: options?.signInWithKaspa?.expirationTime,
+        notBefore: options?.signInWithKaspa?.notBefore,
+        requestId: options?.signInWithKaspa?.requestId,
+        resources: options?.signInWithKaspa?.resources,
+      }
+
+      try {
+        message = createSiwkMessage(siwkMessage)
+
+        signature = (await resolvedWallet.request('kaspa:signPersonal', [message])) as Hex
+      } catch (error) {
+        throw new Error(
+          `@supabase/auth-js: Wallet failed upon signing. ${error instanceof Error ? error.message : String(error)}`
+        )
+      }
+    }
+
+    try {
+      const { data, error } = await _request(
+        this.fetch,
+        'POST',
+        `${this.url}/token?grant_type=web3`,
+        {
+          headers: this.headers,
+          body: {
+            chain: 'kaspa',
+            message,
+            signature,
+            ...(credentials.options?.captchaToken
+              ? { gotrue_meta_security: { captcha_token: credentials.options?.captchaToken } }
+              : null),
+          },
+          xform: _sessionResponse,
+        }
+      )
+      if (error) {
+        throw error
+      }
+      if (!data || !data.session || !data.user) {
+        return {
+          data: { user: null, session: null },
+          error: new AuthInvalidTokenResponseError(),
+        }
+      }
+      if (data.session) {
+        await this._saveSession(data.session)
+        await this._notifyAllSubscribers('SIGNED_IN', data.session)
+      }
+      return { data: { ...data }, error }
+    } catch (error) {
+      if (isAuthError(error)) {
+        return { data: { user: null, session: null }, error }
       }
 
       throw error
