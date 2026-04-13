@@ -57,12 +57,27 @@ describe('kaspa', () => {
     test('should create basic SIWK message', () => {
       const message = createSiwkMessage(baseMessage)
 
-      expect(message).toContain('example.com wants you to sign in with your Kaspa address:')
+      expect(message).toContain('example.com wants you to sign in with your Kaspa account:')
       expect(message).toContain('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')
       expect(message).toContain('URI: https://example.com')
       expect(message).toContain('Version: 1')
-      expect(message).toContain('Chain ID: kaspa_mainnet')
+      expect(message).toContain('Network ID: kaspa_mainnet')
       expect(message).toContain('Issued At:')
+      expect(message).toMatch(/Nonce: [0-9a-f]{16}/)
+    })
+
+    test('should auto-generate a nonce when none is provided', () => {
+      const message1 = createSiwkMessage(baseMessage)
+      const message2 = createSiwkMessage(baseMessage)
+
+      const nonce1 = message1.match(/Nonce: ([0-9a-f]+)/)?.[1]
+      const nonce2 = message2.match(/Nonce: ([0-9a-f]+)/)?.[1]
+
+      expect(nonce1).toBeDefined()
+      expect(nonce2).toBeDefined()
+      expect(nonce1!.length).toBeGreaterThanOrEqual(8)
+      // Two calls should produce different nonces
+      expect(nonce1).not.toBe(nonce2)
     })
 
     test('should include optional fields when provided', () => {
@@ -208,7 +223,7 @@ describe('kaspa', () => {
       // Check the structure
       const lines = message.split('\n')
       expect(lines[0]).toBe(
-        'https://kaspa.example.com wants you to sign in with your Kaspa address:'
+        'https://kaspa.example.com wants you to sign in with your Kaspa account:'
       )
       expect(lines[1]).toBe('kaspa:qqk948c2dy6cp0vdg7fqx9xttc47q4qdazunhmfv8u24v77uvmxhycc2uj3yn')
       expect(lines[2]).toBe('')
@@ -216,7 +231,7 @@ describe('kaspa', () => {
       expect(lines[4]).toBe('')
       expect(lines[5]).toBe('URI: https://kaspa.example.com/auth')
       expect(lines[6]).toBe('Version: 1')
-      expect(lines[7]).toBe('Chain ID: kaspa_mainnet')
+      expect(lines[7]).toBe('Network ID: kaspa_mainnet')
       expect(lines[8]).toBe('Nonce: abcdef1234567890')
       expect(lines[9]).toMatch(/^Issued At: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
       expect(lines[10]).toBe('Expiration Time: 2024-12-31T23:59:59.000Z')

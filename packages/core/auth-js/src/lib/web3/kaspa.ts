@@ -127,6 +127,15 @@ export function getAddress(address: string): Address {
   }
 }
 
+function generateNonce(): string {
+  const array = new Uint8Array(8)
+  if (typeof crypto === 'undefined') {
+    return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('')
+  }
+  crypto.getRandomValues(array)
+  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
 export function createSiwkMessage(parameters: SiwkMessage): string {
   const {
     chainId,
@@ -172,10 +181,10 @@ export function createSiwkMessage(parameters: SiwkMessage): string {
   const address = getAddress(parameters.address)
   const origin = scheme ? `${scheme}://${domain}` : domain
   const statement = parameters.statement ? `${parameters.statement}\n` : ''
-  const prefix = `${origin} wants you to sign in with your Kaspa address:\n${address}\n\n${statement}`
+  const prefix = `${origin} wants you to sign in with your Kaspa account:\n${address}\n\n${statement}`
 
-  let suffix = `URI: ${uri}\nVersion: ${version}\nChain ID: ${chainId}${nonce ? `\nNonce: ${nonce}` : ''
-    }\nIssued At: ${issuedAt.toISOString()}`
+  const resolvedNonce = nonce ?? generateNonce()
+  let suffix = `URI: ${uri}\nVersion: ${version}\nNetwork ID: ${chainId}\nNonce: ${resolvedNonce}\nIssued At: ${issuedAt.toISOString()}`
 
   if (expirationTime) suffix += `\nExpiration Time: ${expirationTime.toISOString()}`
   if (notBefore) suffix += `\nNot Before: ${notBefore.toISOString()}`

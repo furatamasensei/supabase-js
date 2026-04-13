@@ -1819,7 +1819,7 @@ export default class GoTrueClient {
   > {
     // TODO: flatten type
     let message: string
-    let signature: Hex
+    let signature: string
 
     if ('message' in credentials) {
       message = credentials.message
