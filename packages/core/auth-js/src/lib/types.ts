@@ -791,10 +791,10 @@ export type KaspaWeb3Credentials =
   | {
       chain: 'kaspa'
 
-      /** The user's Kaspa address. If omitted, resolved automatically via `kaspa:requestAccounts`. */
+      /** The user's Kaspa address. */
       address?: string
 
-      /** Wallet interface to use. If not specified, will be auto-detected via the KIP-12 `kaspa:requestProvider` event. */
+      /** Wallet interface to use. */
       wallet?: KaspaWallet
 
       /** Optional statement to include in the Sign in with Kaspa message. Must not include new line characters. */
@@ -810,7 +810,7 @@ export type KaspaWeb3Credentials =
         signInWithKaspa?: Partial<
           Omit<KaspaSignInInput, 'version' | 'domain' | 'uri' | 'statement' | 'address'>
         > & {
-          /** The Kaspa network ID. If omitted, resolved automatically via `kaspa:chainId`. */
+          /** The Kaspa network ID. */
           chainId?: NetworkId
         }
       }
